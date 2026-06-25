@@ -1,0 +1,71 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = "Settings"|t('webhook-notifier') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="webhook-notifier/settings/save">
+    {{ redirectInput('webhook-notifier/settings') }}
+
+    {{ forms.lightswitchField({
+        first: true,
+        label: "Enabled"|t('webhook-notifier'),
+        instructions: "Global on/off switch for all rule-driven notifications."|t('webhook-notifier'),
+        name: 'settings[enabled]',
+        on: settings.enabled,
+        disabled: 'enabled' in overrides,
+    }) }}
+
+    {{ forms.selectField({
+        label: "Default connection"|t('webhook-notifier'),
+        instructions: "Used by rules that don’t pick their own connection."|t('webhook-notifier'),
+        name: 'settings[defaultConnectionId]',
+        options: connectionOptions,
+        value: settings.defaultConnectionId,
+        disabled: 'defaultConnectionId' in overrides,
+    }) }}
+
+    {{ forms.selectField({
+        label: "Default card version"|t('webhook-notifier'),
+        name: 'settings[defaultCardVersion]',
+        options: {
+            '1.2': '1.2',
+            '1.3': '1.3',
+            '1.4': '1.4',
+            '1.5': '1.5',
+        },
+        value: settings.defaultCardVersion,
+        disabled: 'defaultCardVersion' in overrides,
+    }) }}
+
+    {{ forms.textField({
+        type: 'number',
+        label: "Log retention (days)"|t('webhook-notifier'),
+        instructions: "Delivery-log rows older than this are pruned automatically."|t('webhook-notifier'),
+        name: 'settings[logRetentionDays]',
+        value: settings.logRetentionDays,
+        size: 6,
+        disabled: 'logRetentionDays' in overrides,
+    }) }}
+
+    {{ forms.textField({
+        type: 'number',
+        label: "HTTP timeout (seconds)"|t('webhook-notifier'),
+        name: 'settings[httpTimeout]',
+        value: settings.httpTimeout,
+        size: 6,
+        disabled: 'httpTimeout' in overrides,
+    }) }}
+
+    {{ forms.textField({
+        type: 'number',
+        label: "Max retries"|t('webhook-notifier'),
+        instructions: "How many times a transient send failure is retried."|t('webhook-notifier'),
+        name: 'settings[maxRetries]',
+        value: settings.maxRetries,
+        size: 6,
+        disabled: 'maxRetries' in overrides,
+    }) }}
+{% endblock %}

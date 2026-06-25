@@ -1,0 +1,47 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Rules"|t('webhook-notifier') %}
+{% set selectedSubnavItem = 'rules' %}
+
+{% block actionButton %}
+    <a href="{{ url('webhook-notifier/rules/new') }}" class="btn submit add icon">{{ "New rule"|t('webhook-notifier') }}</a>
+{% endblock %}
+
+{% block content %}
+    <p class="light" style="margin-bottom:24px; max-width:48em">
+        {{ "A rule watches for an event (an entry being saved, a form submitted, a job failing…), optionally filters it with conditions, then posts a card to a Teams channel. Add as many as you like."|t('webhook-notifier') }}
+    </p>
+
+    {% if rules|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th scope="col">{{ "Name"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Source"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Enabled"|t('webhook-notifier') }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                    <tr>
+                        <th scope="row"><a href="{{ url('webhook-notifier/rules/' ~ rule.id) }}">{{ rule.name }}</a></th>
+                        <td>{{ sourceOptions[rule.sourceType] ?? rule.sourceType }}</td>
+                        <td>{{ rule.enabled ? '<span class="status green"></span> ' ~ 'Yes'|t('webhook-notifier') : '<span class="status"></span> ' ~ 'No'|t('webhook-notifier') }}</td>
+                        <td class="thin">
+                            <form method="post" onsubmit="return confirm('{{ 'Delete this rule?'|t('webhook-notifier') }}')">
+                                {{ csrfInput() }}
+                                {{ actionInput('webhook-notifier/rules/delete') }}
+                                {{ redirectInput('webhook-notifier/rules') }}
+                                {{ hiddenInput('id', rule.id) }}
+                                <button type="submit" class="btn small delete">{{ "Delete"|t('webhook-notifier') }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ "No rules yet. A rule listens for an event, optionally filters it, and posts a card to a Teams channel."|t('webhook-notifier') }}</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Delivery log"|t('webhook-notifier') %}
+{% set selectedSubnavItem = 'logs' %}
+
+{% set statusColors = {
+    sent: 'green',
+    failed: 'red',
+    retrying: 'orange',
+    queued: 'grey',
+} %}
+
+{% block content %}
+    {% if deliveries|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th scope="col">{{ "When"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Status"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Source"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Summary"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "HTTP"|t('webhook-notifier') }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for delivery in deliveries %}
+                    <tr>
+                        <td data-title="{{ 'When'|t('webhook-notifier') }}">{{ delivery.dateCreated ? delivery.dateCreated|datetime('short') }}</td>
+                        <td data-title="{{ 'Status'|t('webhook-notifier') }}">
+                            <span class="status {{ statusColors[delivery.status] ?? 'grey' }}"></span>{{ delivery.status }}
+                        </td>
+                        <td data-title="{{ 'Source'|t('webhook-notifier') }}">{{ delivery.sourceType ?: '—' }}</td>
+                        <td data-title="{{ 'Summary'|t('webhook-notifier') }}">{{ delivery.contextSummary ?: '—' }}</td>
+                        <td data-title="{{ 'HTTP'|t('webhook-notifier') }}">{{ delivery.httpStatus ?: '—' }}</td>
+                        <td class="thin"><a href="{{ url('webhook-notifier/logs/' ~ delivery.id) }}">{{ "Details"|t('webhook-notifier') }}</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ "No deliveries logged yet."|t('webhook-notifier') }}</p>
+    {% endif %}
+{% endblock %}

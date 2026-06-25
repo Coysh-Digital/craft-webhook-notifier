@@ -1,0 +1,297 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set selectedSubnavItem = 'rules' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="webhook-notifier/rules/save">
+    {{ redirectInput('webhook-notifier/rules') }}
+    {% if not isNew %}{{ hiddenInput('ruleId', rule.id) }}{% endif %}
+
+    {{ forms.textField({
+        first: true,
+        label: "Name"|t('webhook-notifier'),
+        id: 'name',
+        name: 'name',
+        value: rule.name,
+        required: true,
+        errors: rule.getErrors('name'),
+    }) }}
+
+    {{ forms.selectField({
+        label: "Source"|t('webhook-notifier'),
+        instructions: "What triggers this notification."|t('webhook-notifier'),
+        id: 'sourceType',
+        name: 'sourceType',
+        options: sourceOptions,
+        value: rule.sourceType,
+        required: true,
+        errors: rule.getErrors('sourceType'),
+    }) }}
+
+    <div class="field">
+        <div class="instructions" style="margin-top:-14px">
+            <p id="webhooknotifier-source-desc" class="light"></p>
+        </div>
+    </div>
+
+    {{ forms.selectField({
+        label: "Connection"|t('webhook-notifier'),
+        instructions: "Which Teams channel to post to."|t('webhook-notifier'),
+        id: 'connectionId',
+        name: 'connectionId',
+        options: connectionOptions,
+        value: rule.connectionId,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: "Enabled"|t('webhook-notifier'),
+        id: 'enabled',
+        name: 'enabled',
+        on: rule.enabled,
+    }) }}
+
+    <hr>
+    <h2>{{ "Conditions"|t('webhook-notifier') }}</h2>
+    <p class="light">{{ "Only send when the event matches these tests. Leave empty to always send."|t('webhook-notifier') }}</p>
+
+    {{ forms.selectField({
+        label: "Match"|t('webhook-notifier'),
+        id: 'conditionMatch',
+        name: 'conditionMatch',
+        options: matchOptions,
+        value: condition.match ?? 'all',
+    }) }}
+
+    <div class="field">
+        <div class="heading"><label>{{ "Tests"|t('webhook-notifier') }}</label></div>
+        <div class="instructions"><p id="webhooknotifier-cond-hint" class="light"></p></div>
+        <div class="input">
+            <div id="webhooknotifier-cond-rows"></div>
+            <button type="button" class="btn add icon" id="webhooknotifier-cond-add">{{ "Add a test"|t('webhook-notifier') }}</button>
+        </div>
+    </div>
+
+    <hr>
+    <h2>{{ "Card"|t('webhook-notifier') }}</h2>
+    <p class="light" id="webhooknotifier-var-hint"></p>
+
+    {{ forms.selectField({
+        label: "Mode"|t('webhook-notifier'),
+        id: 'card-mode',
+        name: 'card[mode]',
+        options: {
+            structured: 'Structured'|t('webhook-notifier'),
+            advanced: 'Advanced (raw Adaptive Card JSON)'|t('webhook-notifier'),
+        },
+        value: card.mode ?? 'structured',
+    }) }}
+
+    <div id="card-structured">
+        {{ forms.textField({
+            label: "Title"|t('webhook-notifier'),
+            instructions: "Supports Twig, e.g. {title}."|t('webhook-notifier'),
+            name: 'card[title]',
+            value: card.title ?? '',
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Body"|t('webhook-notifier'),
+            instructions: "Markdown and Twig are supported."|t('webhook-notifier'),
+            name: 'card[bodyMarkdown]',
+            value: card.bodyMarkdown ?? '',
+            rows: 4,
+        }) }}
+
+        {{ forms.editableTableField({
+            label: "Facts"|t('webhook-notifier'),
+            instructions: "Key/value rows shown beneath the body."|t('webhook-notifier'),
+            id: 'card-facts',
+            name: 'card[facts]',
+            cols: {
+                title: { heading: 'Label'|t('webhook-notifier'), type: 'singleline' },
+                value: { heading: 'Value'|t('webhook-notifier'), type: 'singleline' },
+            },
+            rows: card.facts ?? [],
+            addRowLabel: "Add a fact"|t('webhook-notifier'),
+            allowAdd: true,
+            allowDelete: true,
+            allowReorder: true,
+        }) }}
+
+        {{ forms.textField({
+            label: "Button label"|t('webhook-notifier'),
+            instructions: "Optional. Adds an 'Open URL' button."|t('webhook-notifier'),
+            name: 'card[buttonLabel]',
+            value: card.button.label ?? '',
+        }) }}
+
+        {{ forms.textField({
+            label: "Button URL"|t('webhook-notifier'),
+            name: 'card[buttonUrl]',
+            value: card.button.url ?? '',
+        }) }}
+    </div>
+
+    <div id="card-advanced" class="hidden">
+        <div class="field">
+            <div class="heading"><label>{{ "Start from an example"|t('webhook-notifier') }}</label></div>
+            <div class="input">
+                <div class="flex">
+                    <div class="select">
+                        <select id="webhooknotifier-example">
+                            <option value="">{{ "Choose an example…"|t('webhook-notifier') }}</option>
+                            {% for i, ex in cardExamples %}
+                                <option value="{{ i }}">{{ ex.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="button" class="btn" id="webhooknotifier-example-insert">{{ "Insert"|t('webhook-notifier') }}</button>
+                </div>
+            </div>
+        </div>
+
+        {{ forms.textareaField({
+            label: "Adaptive Card JSON"|t('webhook-notifier'),
+            instructions: "A full Adaptive Card body. Twig is supported."|t('webhook-notifier'),
+            id: 'card-advanced-json',
+            name: 'card[advancedJson]',
+            value: card.advancedJson ?? '',
+            rows: 14,
+            class: 'code',
+        }) }}
+    </div>
+{% endblock %}
+
+{% js %}
+/**
+ * Rule editor behaviour:
+ *  - keeps the condition "Field" dropdowns and the "Available variables" hints in
+ *    sync with the chosen Source (rebuilt live, no save needed);
+ *  - lets you add/remove condition rows;
+ *  - toggles the Structured vs Advanced card sections;
+ *  - inserts a ready-made example into the Advanced JSON box.
+ * All per-source data (fields, card variables, descriptions, examples) is
+ * injected from PHP as JSON just below.
+ */
+(function() {
+    var sourceFields = {{ sourceFields|json_encode|raw }};
+    var sourceCardVariables = {{ sourceCardVariables|json_encode|raw }};
+    var sourceDescriptions = {{ sourceDescriptions|json_encode|raw }};
+    var cardExamples = {{ cardExamples|json_encode|raw }};
+    var operatorOptions = {{ operatorOptions|json_encode|raw }};
+    var existingRules = {{ (condition.rules ?? [])|json_encode|raw }};
+    var labels = {
+        value: {{ 'Value'|t('webhook-notifier')|json_encode|raw }},
+        remove: {{ 'Remove'|t('webhook-notifier')|json_encode|raw }},
+        vars: {{ 'Available variables:'|t('webhook-notifier')|json_encode|raw }},
+        pickField: {{ 'Pick a field…'|t('webhook-notifier')|json_encode|raw }}
+    };
+
+    var sourceSelect = document.getElementById('sourceType');
+    var rowsEl = document.getElementById('webhooknotifier-cond-rows');
+    var descEl = document.getElementById('webhooknotifier-source-desc');
+    var hintEl = document.getElementById('webhooknotifier-cond-hint');
+    var varHintEl = document.getElementById('webhooknotifier-var-hint');
+    var rowIndex = 0;
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+    }
+
+    function currentFields() {
+        var s = sourceSelect ? sourceSelect.value : '';
+        return sourceFields[s] || {};
+    }
+
+    function fieldOptions(selected) {
+        var fields = currentFields();
+        var html = '<option value="">' + esc(labels.pickField) + '</option>';
+        var matched = false;
+        Object.keys(fields).forEach(function(key) {
+            var sel = key === selected ? ' selected' : '';
+            if (sel) { matched = true; }
+            html += '<option value="' + esc(key) + '"' + sel + '>' + esc(key) + '</option>';
+        });
+        if (selected && !matched) {
+            html += '<option value="' + esc(selected) + '" selected>' + esc(selected) + '</option>';
+        }
+        return html;
+    }
+
+    function operatorOptionsHtml(selected) {
+        var html = '';
+        Object.keys(operatorOptions).forEach(function(v) {
+            html += '<option value="' + esc(v) + '"' + (v === selected ? ' selected' : '') + '>' + esc(operatorOptions[v]) + '</option>';
+        });
+        return html;
+    }
+
+    function addRow(rule) {
+        rule = rule || {field: '', operator: 'equals', value: ''};
+        var i = rowIndex++;
+        var row = document.createElement('div');
+        row.className = 'flex';
+        row.style.marginBottom = '7px';
+        row.innerHTML =
+            '<div class="select"><select name="conditionRules[' + i + '][field]" class="webhooknotifier-cond-field">' + fieldOptions(rule.field) + '</select></div>' +
+            '<div class="select"><select name="conditionRules[' + i + '][operator]">' + operatorOptionsHtml(rule.operator) + '</select></div>' +
+            '<input type="text" class="text fullwidth" style="max-width:240px" name="conditionRules[' + i + '][value]" value="' + esc(rule.value) + '" placeholder="' + esc(labels.value) + '">' +
+            '<button type="button" class="btn small webhooknotifier-cond-remove">' + esc(labels.remove) + '</button>';
+        row.querySelector('.webhooknotifier-cond-remove').addEventListener('click', function() { row.remove(); });
+        rowsEl.appendChild(row);
+    }
+
+    function hintFrom(map) {
+        var keys = Object.keys(map || {});
+        return keys.length ? (labels.vars + ' ' + keys.map(function(k) { return '{' + k + '}'; }).join('  ')) : '';
+    }
+
+    function syncSource() {
+        var s = sourceSelect ? sourceSelect.value : '';
+        if (descEl) { descEl.textContent = sourceDescriptions[s] || ''; }
+        // Conditions can only test the source's fields; cards can use richer variables.
+        if (hintEl) { hintEl.textContent = hintFrom(sourceFields[s]); }
+        if (varHintEl) { varHintEl.textContent = hintFrom(sourceCardVariables[s] || sourceFields[s]); }
+        // Rebuild field <select>s for the new source, preserving any chosen value.
+        rowsEl.querySelectorAll('.webhooknotifier-cond-field').forEach(function(sel) {
+            sel.innerHTML = fieldOptions(sel.value);
+        });
+    }
+
+    existingRules.forEach(addRow);
+    if (sourceSelect) { sourceSelect.addEventListener('change', syncSource); }
+    document.getElementById('webhooknotifier-cond-add').addEventListener('click', function() { addRow(); });
+    syncSource();
+
+    // Card mode toggle.
+    var modeField = document.getElementById('card-mode');
+    var structured = document.getElementById('card-structured');
+    var advanced = document.getElementById('card-advanced');
+    function syncMode() {
+        var advancedOn = modeField.value === 'advanced';
+        structured.classList.toggle('hidden', advancedOn);
+        advanced.classList.toggle('hidden', !advancedOn);
+    }
+    if (modeField) {
+        modeField.addEventListener('change', syncMode);
+        syncMode();
+    }
+
+    // Insert an advanced example into the JSON textarea.
+    var exampleSelect = document.getElementById('webhooknotifier-example');
+    var exampleInsert = document.getElementById('webhooknotifier-example-insert');
+    var jsonField = document.getElementById('card-advanced-json');
+    if (exampleInsert && exampleSelect && jsonField) {
+        exampleInsert.addEventListener('click', function() {
+            var idx = exampleSelect.value;
+            if (idx === '' || !cardExamples[idx]) { return; }
+            if (jsonField.value.trim() !== '' && !window.confirm({{ 'Replace the current JSON with this example?'|t('webhook-notifier')|json_encode|raw }})) { return; }
+            jsonField.value = cardExamples[idx].template;
+        });
+    }
+})();
+{% endjs %}

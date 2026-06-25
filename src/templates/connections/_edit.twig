@@ -1,0 +1,50 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set selectedSubnavItem = 'connections' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="webhook-notifier/connections/save">
+    {{ redirectInput('webhook-notifier/connections') }}
+    {% if not isNew %}
+        {{ hiddenInput('connectionId', connection.id) }}
+        {# Also exposed as `id` so the "Send test card" button (which reuses this form via formaction) can target the test action. #}
+        {{ hiddenInput('id', connection.id) }}
+    {% endif %}
+
+    {{ forms.textField({
+        first: true,
+        label: "Name"|t('webhook-notifier'),
+        id: 'name',
+        name: 'name',
+        value: connection.name,
+        required: true,
+        errors: connection.getErrors('name'),
+    }) }}
+
+    {{ forms.textField({
+        label: "Webhook URL"|t('webhook-notifier'),
+        id: 'urlInput',
+        name: 'urlInput',
+        value: '',
+        placeholder: isNew ? 'https://… or $TEAMS_WEBHOOK_OPS' : (maskedUrl ~ '  (' ~ 'leave blank to keep'|t('webhook-notifier') ~ ')'),
+        instructions: "Paste the Power Automate Workflows webhook URL for the channel, or reference an environment variable such as {ex}. Direct values are encrypted at rest."|t('webhook-notifier', {ex: '$TEAMS_WEBHOOK_OPS'}),
+        required: isNew,
+        errors: connection.getErrors('url'),
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: "Enabled"|t('webhook-notifier'),
+        id: 'enabled',
+        name: 'enabled',
+        on: connection.enabled,
+    }) }}
+
+    {% if not isNew %}
+        <hr>
+        <div class="buttons">
+            <button type="submit" class="btn" formaction="{{ url('actions/webhook-notifier/connections/test') }}">{{ "Send test card"|t('webhook-notifier') }}</button>
+        </div>
+    {% endif %}
+{% endblock %}

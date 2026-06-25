@@ -1,0 +1,34 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Delivery ##{delivery.id}"|t('webhook-notifier', {id: delivery.id}) %}
+{% set selectedSubnavItem = 'logs' %}
+{% set crumbs = [{ label: 'Delivery log'|t('webhook-notifier'), url: url('webhook-notifier/logs') }] %}
+
+{% block content %}
+    <table class="data fullwidth">
+        <tbody>
+            <tr><th>{{ "Status"|t('webhook-notifier') }}</th><td>{{ delivery.status }}</td></tr>
+            <tr><th>{{ "When"|t('webhook-notifier') }}</th><td>{{ delivery.dateCreated ? delivery.dateCreated|datetime('long') }}</td></tr>
+            <tr><th>{{ "Source"|t('webhook-notifier') }}</th><td>{{ delivery.sourceType ?: '—' }}</td></tr>
+            <tr><th>{{ "Rule ID"|t('webhook-notifier') }}</th><td>{{ delivery.ruleId ?: '—' }}</td></tr>
+            <tr><th>{{ "Connection ID"|t('webhook-notifier') }}</th><td>{{ delivery.connectionId ?: '—' }}</td></tr>
+            <tr><th>{{ "Attempt"|t('webhook-notifier') }}</th><td>{{ delivery.attempt }}</td></tr>
+            <tr><th>{{ "HTTP status"|t('webhook-notifier') }}</th><td>{{ delivery.httpStatus ?: '—' }}</td></tr>
+            <tr><th>{{ "Summary"|t('webhook-notifier') }}</th><td>{{ delivery.contextSummary ?: '—' }}</td></tr>
+            {% if delivery.errorMessage %}
+                <tr><th>{{ "Error"|t('webhook-notifier') }}</th><td>{{ delivery.errorMessage }}</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    {% if delivery.requestPayload %}
+        <h2>{{ "Request payload"|t('webhook-notifier') }}</h2>
+        {% set decoded = delivery.requestPayload|json_decode %}
+        <pre><code>{{ decoded ? decoded|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) : delivery.requestPayload }}</code></pre>
+    {% endif %}
+
+    {% if delivery.responseBody %}
+        <h2>{{ "Response"|t('webhook-notifier') }}</h2>
+        <pre><code>{{ delivery.responseBody }}</code></pre>
+    {% endif %}
+{% endblock %}

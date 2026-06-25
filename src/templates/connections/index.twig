@@ -1,0 +1,64 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Connections"|t('webhook-notifier') %}
+{% set selectedSubnavItem = 'connections' %}
+
+{% block actionButton %}
+    <a href="{{ url('webhook-notifier/connections/new') }}" class="btn submit add icon">{{ "New connection"|t('webhook-notifier') }}</a>
+{% endblock %}
+
+{% block content %}
+    <p class="light" style="margin-bottom:24px; max-width:48em">
+        {{ "A connection is one place to send notifications — a Microsoft Teams channel’s Power Automate Workflows webhook URL. Add one, send a test card to check it works, then point your rules at it."|t('webhook-notifier') }}
+    </p>
+
+    {% if connections|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th scope="col">{{ "Name"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Webhook"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Enabled"|t('webhook-notifier') }}</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for connection in connections %}
+                    <tr>
+                        <th scope="row" data-title="{{ 'Name'|t('webhook-notifier') }}">
+                            <a href="{{ url('webhook-notifier/connections/' ~ connection.id) }}">{{ connection.name }}</a>
+                        </th>
+                        <td data-title="{{ 'Webhook'|t('webhook-notifier') }}">
+                            <code>{{ maskedUrls[connection.id] ?? '' }}</code>
+                            {% if connection.isEnvVar %}
+                                <span class="light">({{ "env var"|t('webhook-notifier') }})</span>
+                            {% endif %}
+                        </td>
+                        <td data-title="{{ 'Enabled'|t('webhook-notifier') }}">
+                            {{ connection.enabled ? '<span class="status green"></span> ' ~ 'Yes'|t('webhook-notifier') : '<span class="status"></span> ' ~ 'No'|t('webhook-notifier') }}
+                        </td>
+                        <td class="thin nowrap">
+                            <form method="post" style="display:inline">
+                                {{ csrfInput() }}
+                                {{ actionInput('webhook-notifier/connections/test') }}
+                                {{ redirectInput('webhook-notifier/connections') }}
+                                {{ hiddenInput('id', connection.id) }}
+                                <button type="submit" class="btn small">{{ "Send test"|t('webhook-notifier') }}</button>
+                            </form>
+                            <form method="post" style="display:inline" onsubmit="return confirm('{{ 'Delete this connection?'|t('webhook-notifier') }}')">
+                                {{ csrfInput() }}
+                                {{ actionInput('webhook-notifier/connections/delete') }}
+                                {{ redirectInput('webhook-notifier/connections') }}
+                                {{ hiddenInput('id', connection.id) }}
+                                <button type="submit" class="btn small delete">{{ "Delete"|t('webhook-notifier') }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ "No connections yet."|t('webhook-notifier') }}</p>
+        <p>{{ "A connection holds a Microsoft Teams Power Automate Workflows webhook URL for one channel."|t('webhook-notifier') }}</p>
+    {% endif %}
+{% endblock %}
