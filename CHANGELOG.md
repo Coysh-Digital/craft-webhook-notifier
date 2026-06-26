@@ -1,5 +1,14 @@
 # Release Notes for Webhook Notifier
 
+## 1.5.1 - 2026-06-26
+
+### Fixed
+- Resending a delivery that has no saved context (e.g. one sent before 1.5.0)
+  came through blank, because it re-rendered the card against an empty context.
+  It now falls back to re-sending the delivery's original payload as-is. Resends
+  only re-render the rule's current card when the delivery has a saved context
+  (i.e. was sent from 1.5.0 onward).
+
 ## 1.5.0 - 2026-06-26
 
 ### Added
