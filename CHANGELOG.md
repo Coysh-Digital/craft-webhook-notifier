@@ -1,5 +1,13 @@
 # Release Notes for Webhook Notifier
 
+## 1.4.1 - 2026-06-26
+
+### Fixed
+- Installing the plugin failed on a fresh install (e.g. via project-config apply
+  on deploy) with "Table '...webhooknotifier_rules' doesn't exist". The Custom
+  event source read its rules during `attachListeners()` before the install
+  migration had created the table; it now skips when the table isn't there yet.
+
 ## 1.4.0 - 2026-06-26
 
 ### Added

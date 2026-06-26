@@ -73,6 +73,13 @@ class CustomEventSource extends BaseSource
      */
     public function attachListeners(): void
     {
+        // This source reads its rules from the database to know which class/event
+        // pairs to listen on - but that table won't exist yet while the plugin is
+        // being installed (its install migration hasn't run), so bail out early.
+        if (!Craft::$app->getDb()->tableExists(RuleRecord::tableName())) {
+            return;
+        }
+
         // One listener per unique (class, event) pair across all enabled rules.
         $groups = [];
 
