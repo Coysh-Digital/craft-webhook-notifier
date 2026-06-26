@@ -9,7 +9,7 @@
 
 {% block content %}
     <p class="light" style="margin-bottom:24px; max-width:48em">
-        {{ "A rule watches for an event (an entry being saved, a form submitted, a job failing…), optionally filters it with conditions, then posts a card to a Teams channel. Add as many as you like."|t('webhook-notifier') }}
+        {{ "A rule watches for an event (an entry being saved, a form submitted, a job failing, or any event you name), optionally filters it with conditions, then sends to a webhook — a Microsoft Teams channel, Zapier, Slack, or any other endpoint. Add as many as you like."|t('webhook-notifier') }}
     </p>
 
     {% if rules|length %}
@@ -42,6 +42,6 @@
             </tbody>
         </table>
     {% else %}
-        <p>{{ "No rules yet. A rule listens for an event, optionally filters it, and posts a card to a Teams channel."|t('webhook-notifier') }}</p>
+        <p>{{ "No rules yet. A rule listens for an event, optionally filters it, and sends to a webhook (Teams, Zapier, Slack, …)."|t('webhook-notifier') }}</p>
     {% endif %}
 {% endblock %}

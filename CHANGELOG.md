@@ -1,5 +1,13 @@
 # Release Notes for Webhook Notifier
 
+## 1.3.1 - 2026-06-26
+
+### Changed
+- New plugin icon (a “fan-out” webhook mark).
+- Control-panel wording is now webhook-agnostic — Microsoft Teams is still the
+  lead example, but the Connections and Rules screens make clear any webhook
+  (Zapier, Slack, custom endpoints) works.
+
 ## 1.3.0 - 2026-06-26
 
 ### Added
