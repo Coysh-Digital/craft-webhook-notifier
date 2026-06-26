@@ -89,6 +89,8 @@ class Install extends Migration
             'id' => $this->primaryKey(),
             'name' => $this->string()->notNull(),
             'sourceType' => $this->string()->notNull(),
+            'senderClass' => $this->string(),
+            'eventName' => $this->string(),
             'connectionId' => $this->integer(),
             'conditionConfig' => $this->text(),
             'cardConfig' => $this->text()->notNull(),

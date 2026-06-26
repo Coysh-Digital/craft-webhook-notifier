@@ -1,100 +1,122 @@
 # Webhook Notifier for Craft CMS
 
-Hey 👋 — this plugin pings a webhook (right now, a **Microsoft Teams** channel)
-whenever something happens on your Craft site, with rules you set up in the
-control panel. No code, no cron-wrangling, no “where do I even put this webhook
-URL” faff.
+Webhook Notifier sends a webhook whenever something happens on your Craft site,
+using rules you set up in the control panel. It started life as a Microsoft Teams
+notifier — Microsoft retired the old Incoming Webhook connectors in May 2026, and
+the replacement (Power Automate Workflows) needs its Adaptive Cards wrapped in a
+particular envelope, which this plugin handles for you. It has since grown into a
+general webhook tool: it can post to **any** webhook — Zapier, Make, Slack, your
+own endpoint — with whatever payload you define.
 
-I built it after Microsoft pulled the rug on the old “Incoming Webhook”
-connectors in May 2026. Those used to be lovely and simple — paste a URL, POST
-some JSON, done. The supported way into Teams now is **Power Automate
-Workflows**, which wants its Adaptive Cards wrapped up just so. This plugin does
-that wrapping for you and puts a proper rules engine on top.
+So there are two halves to it: a delivery side (Teams Adaptive Cards, or a raw
+payload of your choosing) and a trigger side (built-in sources, or any Craft/Yii
+event you name).
 
-It’s called *Webhook Notifier* rather than *Teams Notifier* on purpose — Teams is
-the first thing it speaks, but the guts (sources → rules → cards → delivery) are
-built so other webhook targets can slot in later.
+## What it does
 
-## What you get
-
-- **A no-code rules engine.** Pick an event, filter it with conditions, design a
-  card, choose where it goes. All in the CP.
-- **Connections.** Named destinations holding a Teams Workflows webhook URL.
-  Stored encrypted, or as a reference to an env var (`$TEAMS_OPS`) so your secret
-  never touches the database or git.
-- **Cards that don’t look like a robot wrote them.** A friendly builder (title,
-  body, facts, a button) plus a raw-JSON “advanced” mode with ready-made
-  examples to crib from.
-- **Sources out of the box:** entries saved, user events, integration/queue
-  failures, queue size, and Freeform submissions (incl. the actual field values).
-- **Reliable delivery.** Everything’s queued and retried, with a full delivery
-  log so you can see exactly what went out and what came back.
-- **Extensible.** Bolt on your own sources from another plugin/module with a
+- **Rules engine in the control panel.** Each rule pairs a trigger with a
+  destination and a payload. No code required for the common cases.
+- **Connections.** A named destination = a webhook URL, stored encrypted or as a
+  reference to an environment variable so the secret stays out of your database
+  and version control.
+- **Two payload formats.** Build a Microsoft Teams Adaptive Card (structured
+  fields or raw card JSON), or send a **raw payload** — a Twig template whose
+  output is POSTed to the webhook as-is, for any non-Teams target.
+- **Triggers.** Built-in sources for common cases, plus a **Custom event** source
+  that listens on any class and event you specify.
+- **Reliable delivery.** Notifications are queued and retried, and every attempt
+  is recorded in a delivery log so you can see what was sent and what came back.
+- **Extensible.** Register your own sources from another plugin or module via a
   single event.
 
 ## Requirements
 
-- Craft CMS 5.0+
-- PHP 8.2+
-- A Teams channel with a Power Automate **Workflows** webhook (2-minute setup, below)
+- Craft CMS 5.0 or later
+- PHP 8.2 or later
 
-## Install
-
-From the Plugin Store, or with Composer:
+## Installation
 
 ```bash
 composer require coysh-digital/craft-webhook-notifier
 php craft plugin/install webhook-notifier
 ```
 
-## Getting a Teams webhook (the bit everyone gets stuck on)
+## Instant, event-driven webhooks
 
-1. In Teams, open the channel → **⋯ → Workflows**.
-2. Pick the **“Post to a channel when a webhook request is received”** template.
-3. Run through the wizard **signed in as someone who’s actually a member of that
-   team** (this matters — see Troubleshooting), and copy the **HTTP POST URL**.
-4. In Craft: **Webhook Notifier → Connections → New**, paste the URL (or an
-   `$ENV_VAR` reference), hit **Send test card**, and watch it land in Teams. 🎉
+The **Custom event** source is the general-purpose trigger, and it works much
+like Craft's first-party Webhook plugin: you give a rule a **Sender Class** (for
+example `craft\elements\Entry`) and an **Event Name** (for example `afterSave`),
+and the moment that event fires, the rule runs. There's no polling and no cron —
+it's immediate.
 
-## The sources
+When the event fires, the event object is handed to your payload as `event`, so
+you can reference anything on it. A raw payload for a Zapier/Make webhook might
+look like:
 
-| Source | Fires when… |
-| --- | --- |
-| **Entry saved** | An entry is created or updated (drafts/revisions skipped). |
-| **User event** | Someone registers, gets activated, or changes group. |
-| **Integration failure** | A queued job dies after Craft’s retries, or your own code calls `reportFailure()`. (The plugin’s own send jobs are ignored, so a failed notification can’t spiral into more notifications.) |
-| **Queue size** | A scheduled check finds the queue backing up (pair with a numeric condition). |
-| **Freeform submission** | A Freeform form is submitted — with the field values available in the card. |
-
-Each source tells you, right there in the rule editor, which variables it exposes
-— so you’re never guessing what `{thing}` you can drop into a card.
-
-## Cards: showing real values
-
-In the structured builder or advanced JSON, anything in `{curly braces}` is a
-Twig variable from the event. A few favourites:
-
-- Entry: `{title}`, `{section}`, `{url}`, `{authorName}`
-- Freeform: `{fields.email}` (any field handle), or `{allFields}` to dump the lot,
-  plus `{formName}` / `{formId}`
-- Failures: `{jobDescription}`, `{error}`
-
-Switch the card to **Advanced** mode and there’s a “Start from an example”
-picker — including a *Freeform: all submitted fields* template that lists every
-field automatically. Steal it, tweak it, ship it.
-
-## Watching the queue (scheduled monitor)
-
-The Queue size source is polled, so give it a cron:
-
-```bash
-php craft webhook-notifier/monitor/queue               # e.g. every 15 minutes
-php craft webhook-notifier/monitor/queue --cooldown=30 # don't alert more than every 30 min
+```twig
+{{ {
+    id: event.sender.id,
+    title: event.sender.title,
+    site: event.sender.site.handle
+}|json_encode|raw }}
 ```
 
-Then make a rule: source **Queue size**, condition `total is greater than 50`,
-and a card that shows `{total}`. Your cron interval (and `--cooldown`) decide how
-often you’re nudged while it stays over the line.
+This makes it straightforward to forward Craft events to any automation tool, not
+just Teams. Pick the **Raw payload** card mode for these, since you usually don't
+want a Teams Adaptive Card wrapper around a generic webhook body.
+
+## Sending to Microsoft Teams
+
+Teams is still a first-class target, with proper Adaptive Card support.
+
+1. In Teams, open the channel → **⋯ → Workflows**.
+2. Choose the **“Post to a channel when a webhook request is received”** template.
+3. Complete the wizard **signed in as a member of that team** (this matters — see
+   Troubleshooting), and copy the **HTTP POST URL**.
+4. In Craft: **Webhook Notifier → Connections → New**, paste the URL (or an
+   `$ENV_VAR` reference), and use **Send test card** to confirm it works.
+
+Then build a rule with a Teams card in either the **Structured** mode (title,
+body, facts, a button) or the **Advanced** mode (full Adaptive Card JSON, with a
+few starter examples to copy).
+
+## The built-in sources
+
+| Source | Fires when… | Trigger type |
+| --- | --- | --- |
+| **Custom event** | Any class + event you name (e.g. `craft\elements\Entry` / `afterSave`) | Instant |
+| **Entry saved** | An entry is created or updated (drafts/revisions skipped) | Instant |
+| **User event** | A user registers, is activated, or changes group | Instant |
+| **Integration failure** | A queued job fails after Craft's retries, or your code calls `reportFailure()` | Instant |
+| **Freeform submission** | A Freeform form is submitted (field values included) | Instant |
+| **Queue size** | A scheduled check finds the queue over a threshold | Scheduled |
+
+The instant sources fire as the event happens. The Queue size source is polled,
+so it needs a cron (below). Each source lists the variables it exposes right in
+the rule editor.
+
+## Variables in payloads
+
+Anything in `{curly braces}` is a Twig value from the triggering event, and full
+Twig tags work too. Some examples:
+
+- Entry source: `{title}`, `{section}`, `{url}`, `{authorName}`
+- Freeform source: `{fields.email}` (any field handle), `{allFields}`,
+  `{formName}`, `{formId}`
+- Integration failure: `{jobDescription}`, `{error}`
+- Custom event: `{{ event.sender.title }}`, `{{ event.sender.id }}`
+
+## Scheduled monitor (Queue size)
+
+The Queue size source is checked on a schedule, so add a cron entry:
+
+```bash
+php craft webhook-notifier/monitor/queue                # e.g. every 15 minutes
+php craft webhook-notifier/monitor/queue --cooldown=30  # at most one alert / 30 min
+```
+
+Then create a rule with the **Queue size** source and a condition such as
+`total is greater than 50`.
 
 ## Sending notifications from your own code
 
@@ -111,17 +133,18 @@ Plugin::getInstance()->sources->reportFailure(
 ## Troubleshooting
 
 **`UnauthorizedSenderForChannelNotification` (HTTP 401) in the delivery log.**
-Classic first-run snag. The Workflow ran fine, but Teams refused the post because
-the flow’s posting identity isn’t a member of the target team/channel. Fix:
-recreate the workflow *from inside the channel* (channel → ⋯ → Workflows) while
-signed in as a team member, or add the flow’s connection account to the team.
-It’s a Teams permissions thing, not a plugin bug.
+The Power Automate flow ran, but Teams refused the post because the flow's
+posting identity isn't a member of the target team or channel. Recreate the
+workflow from inside the channel (channel → ⋯ → Workflows) while signed in as a
+team member, or add the flow's connection account to the team. This is a Teams
+permissions issue rather than a plugin error.
 
-**Nothing in Teams, nothing in the log.** Check the rule is enabled, its source
-matches the thing you actually did, and its conditions genuinely pass.
+**Nothing arrives and nothing is logged.** Check the rule is enabled, its source
+(and, for a Custom event, the Sender Class and Event Name) matches what happened,
+and its conditions pass.
 
 ## Trademark notice
 
 “Microsoft”, “Microsoft Teams”, and “Power Automate” are trademarks of the
-Microsoft group of companies. This plugin is an independent product and isn’t
+Microsoft group of companies. This plugin is an independent product and is not
 affiliated with, endorsed by, or sponsored by Microsoft.

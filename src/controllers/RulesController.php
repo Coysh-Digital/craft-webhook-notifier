@@ -133,6 +133,10 @@ class RulesController extends Controller
         $rule->sourceType = (string)$request->getBodyParam('sourceType');
         $rule->enabled = (bool)$request->getBodyParam('enabled', true);
 
+        // Only meaningful for the "Custom event" source; stored regardless.
+        $rule->senderClass = trim((string)$request->getBodyParam('senderClass')) ?: null;
+        $rule->eventName = trim((string)$request->getBodyParam('eventName')) ?: null;
+
         $connectionId = $request->getBodyParam('connectionId');
         $rule->connectionId = $connectionId !== '' && $connectionId !== null ? (int)$connectionId : null;
 
@@ -193,9 +197,10 @@ class RulesController extends Controller
      */
     private function _buildCardConfig(array $posted): array
     {
-        $mode = ($posted['mode'] ?? Cards::MODE_STRUCTURED) === Cards::MODE_ADVANCED
-            ? Cards::MODE_ADVANCED
-            : Cards::MODE_STRUCTURED;
+        $mode = $posted['mode'] ?? Cards::MODE_STRUCTURED;
+        if (!in_array($mode, [Cards::MODE_STRUCTURED, Cards::MODE_ADVANCED, Cards::MODE_RAW], true)) {
+            $mode = Cards::MODE_STRUCTURED;
+        }
 
         $facts = [];
         foreach ((array)($posted['facts'] ?? []) as $row) {
@@ -217,6 +222,7 @@ class RulesController extends Controller
                 'url' => (string)($posted['buttonUrl'] ?? ''),
             ],
             'advancedJson' => (string)($posted['advancedJson'] ?? ''),
+            'payloadJson' => (string)($posted['payloadJson'] ?? ''),
         ];
     }
 

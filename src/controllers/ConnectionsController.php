@@ -11,6 +11,7 @@ namespace coyshdigital\webhooknotifier\controllers;
 use Craft;
 use coyshdigital\webhooknotifier\Plugin;
 use coyshdigital\webhooknotifier\records\ConnectionRecord;
+use coyshdigital\webhooknotifier\services\Cards;
 use coyshdigital\webhooknotifier\services\Deliveries;
 use craft\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -173,7 +174,10 @@ class ConnectionsController extends Controller
         }
 
         $plugin = Plugin::getInstance();
-        $delivery = $plugin->sender->send($connection, $plugin->cards->testCard(), [
+        $delivery = $plugin->sender->send($connection, [
+            'format' => Cards::FORMAT_TEAMS,
+            'content' => $plugin->cards->testCard(),
+        ], [
             'contextSummary' => Craft::t('webhook-notifier', 'Manual test send'),
         ]);
 

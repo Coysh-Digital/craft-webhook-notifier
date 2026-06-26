@@ -30,22 +30,41 @@ class Sender extends Component
     // =========================================================================
 
     /**
-     * Sends a card to a connection and logs the result.
+     * Sends a payload to a connection and logs the result.
+     *
+     * The `$payload` descriptor is what {@see Cards::render()} returns:
+     *  - `['format' => 'teams', 'content' => <Adaptive Card array>]` — wrapped in
+     *    the Power Automate Workflows envelope.
+     *  - `['format' => 'raw', 'content' => <body string>]` — POSTed to the webhook
+     *    as-is (for Zapier, Make, Slack, or any other webhook).
      *
      * Always returns a saved {@see DeliveryRecord}; a transient failure is
      * recorded with status {@see Deliveries::STATUS_RETRYING} so the caller (the
      * queue job) can decide whether to retry.
      *
      * @param ConnectionRecord $connection
-     * @param array<string, mixed> $cardContent The Adaptive Card content array.
+     * @param array{format?: string, content?: array<string, mixed>|string} $payload
      * @param array<string, mixed> $context Optional log context: `ruleId`,
      * `sourceType`, `contextSummary`, `attempt`.
      * @return DeliveryRecord
      */
-    public function send(ConnectionRecord $connection, array $cardContent, array $context = []): DeliveryRecord
+    public function send(ConnectionRecord $connection, array $payload, array $context = []): DeliveryRecord
     {
         $deliveries = Plugin::getInstance()->deliveries;
-        $envelope = TeamsEnvelope::wrap($cardContent);
+
+        $format = $payload['format'] ?? Cards::FORMAT_TEAMS;
+        $content = $payload['content'] ?? [];
+
+        // Build the request body and a string version for the delivery log.
+        if ($format === Cards::FORMAT_RAW) {
+            $body = is_string($content) ? $content : Json::encode($content);
+            $requestOptions = ['body' => $body, 'headers' => ['Content-Type' => 'application/json']];
+            $loggedPayload = $body;
+        } else {
+            $envelope = TeamsEnvelope::wrap(is_array($content) ? $content : []);
+            $requestOptions = ['json' => $envelope];
+            $loggedPayload = Json::encode($envelope);
+        }
 
         $attributes = [
             'ruleId' => $context['ruleId'] ?? null,
@@ -53,7 +72,7 @@ class Sender extends Component
             'sourceType' => $context['sourceType'] ?? null,
             'contextSummary' => $context['contextSummary'] ?? null,
             'attempt' => (int)($context['attempt'] ?? 1),
-            'requestPayload' => Json::encode($envelope),
+            'requestPayload' => $loggedPayload,
         ];
 
         $url = Plugin::getInstance()->connections->resolveUrl($connection);
@@ -67,10 +86,7 @@ class Sender extends Component
 
         try {
             $client = Craft::createGuzzleClient(['timeout' => Plugin::getInstance()->getSettings()->httpTimeout]);
-            $response = $client->post($url, [
-                'json' => $envelope,
-                'http_errors' => false,
-            ]);
+            $response = $client->post($url, $requestOptions + ['http_errors' => false]);
 
             $statusCode = $response->getStatusCode();
             $body = (string)$response->getBody();

@@ -1,5 +1,22 @@
 # Release Notes for Webhook Notifier
 
+## 1.3.0 - 2026-06-26
+
+### Added
+- **Custom event source.** Trigger a rule on any Yii/Craft event by naming a
+  Sender Class (e.g. `craft\elements\Entry`) and an Event Name (e.g. `afterSave`),
+  like Craft's built-in Webhook plugin. The event object is available in the
+  payload as `{{ event }}`.
+- **Raw payload mode.** A new card mode that POSTs a Twig-rendered body to the
+  webhook as-is (Content-Type `application/json`) with no Teams wrapping — so the
+  plugin now works with any webhook (Zapier, Make, Slack, custom endpoints), not
+  just Microsoft Teams.
+
+### Changed
+- Card templates now expose context keys as top-level Twig variables, so full
+  Twig such as `{{ event.sender.title }}` works alongside the `{shorthand}` form.
+- Connection/“Card” wording generalised to reflect any-webhook use.
+
 ## 1.2.0 - 2026-06-25
 
 > Renamed from “MS Teams Notifications” to **Webhook Notifier** — Teams is still

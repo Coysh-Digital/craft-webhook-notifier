@@ -95,14 +95,31 @@ class Rules extends Component
     }
 
     /**
-     * Handles a fired source event: finds matching rules, renders their cards,
-     * and queues a notification for each.
+     * Handles a fired source event: finds the enabled rules for the source,
+     * then dispatches them against the context.
      *
      * @param string $sourceType
      * @param array<string, mixed> $context The source's normalized context.
      * @return int The number of notifications queued.
      */
     public function handle(string $sourceType, array $context): int
+    {
+        return $this->dispatchRules($this->getEnabledRulesForSource($sourceType), $sourceType, $context);
+    }
+
+    /**
+     * Dispatches a given set of rules against a context: evaluates each rule's
+     * condition, renders its payload, and queues a notification.
+     *
+     * (The "Custom event" source calls this directly with the rules matching the
+     * fired class + event.)
+     *
+     * @param RuleRecord[] $rules
+     * @param string $sourceType
+     * @param array<string, mixed> $context
+     * @return int The number of notifications queued.
+     */
+    public function dispatchRules(array $rules, string $sourceType, array $context): int
     {
         $plugin = Plugin::getInstance();
         $settings = $plugin->getSettings();
@@ -113,7 +130,7 @@ class Rules extends Component
 
         $queued = 0;
 
-        foreach ($this->getEnabledRulesForSource($sourceType) as $rule) {
+        foreach ($rules as $rule) {
             try {
                 if (!$this->_passesCondition($rule, $context)) {
                     continue;
@@ -133,11 +150,11 @@ class Rules extends Component
                 }
 
                 $cardConfig = Json::decodeIfJson($rule->cardConfig) ?: [];
-                $cardContent = $plugin->cards->render($cardConfig, $context);
+                $payload = $plugin->cards->render($cardConfig, $context);
 
                 Queue::push(new SendNotification([
                     'connectionId' => (int)$connectionId,
-                    'cardContent' => $cardContent,
+                    'payload' => $payload,
                     'ruleId' => $rule->id,
                     'sourceType' => $sourceType,
                     'contextSummary' => $this->_summary($context, $sourceType),

@@ -36,9 +36,34 @@
         </div>
     </div>
 
+    {# Shown only for the "Custom event" source (toggled by JS). #}
+    <div id="webhooknotifier-event-config" class="hidden">
+        {{ forms.autosuggestField({
+            label: "Sender Class"|t('webhook-notifier'),
+            instructions: "The class the event fires on, e.g. craft\\elements\\Entry."|t('webhook-notifier'),
+            id: 'senderClass',
+            name: 'senderClass',
+            value: rule.senderClass,
+            suggestions: [{ label: 'Common classes', data: [
+                { name: 'craft\\elements\\Entry', hint: 'Entries' },
+                { name: 'craft\\elements\\Asset', hint: 'Assets' },
+                { name: 'craft\\elements\\User', hint: 'Users' },
+                { name: 'craft\\services\\Elements', hint: 'All elements' },
+            ]}],
+        }) }}
+
+        {{ forms.textField({
+            label: "Event Name"|t('webhook-notifier'),
+            instructions: "The event constant’s value, e.g. afterSave, afterDelete."|t('webhook-notifier'),
+            id: 'eventName',
+            name: 'eventName',
+            value: rule.eventName,
+        }) }}
+    </div>
+
     {{ forms.selectField({
         label: "Connection"|t('webhook-notifier'),
-        instructions: "Which Teams channel to post to."|t('webhook-notifier'),
+        instructions: "Where to send it — a Teams channel, or any other webhook."|t('webhook-notifier'),
         id: 'connectionId',
         name: 'connectionId',
         options: connectionOptions,
@@ -74,16 +99,18 @@
     </div>
 
     <hr>
-    <h2>{{ "Card"|t('webhook-notifier') }}</h2>
+    <h2>{{ "Card / payload"|t('webhook-notifier') }}</h2>
     <p class="light" id="webhooknotifier-var-hint"></p>
 
     {{ forms.selectField({
         label: "Mode"|t('webhook-notifier'),
+        instructions: "Structured & Advanced build a Microsoft Teams Adaptive Card. Raw payload posts your own body to any webhook (Zapier, Slack, …)."|t('webhook-notifier'),
         id: 'card-mode',
         name: 'card[mode]',
         options: {
-            structured: 'Structured'|t('webhook-notifier'),
+            structured: 'Structured (Teams card)'|t('webhook-notifier'),
             advanced: 'Advanced (raw Adaptive Card JSON)'|t('webhook-notifier'),
+            raw: 'Raw payload (any webhook)'|t('webhook-notifier'),
         },
         value: card.mode ?? 'structured',
     }) }}
@@ -159,6 +186,19 @@
             name: 'card[advancedJson]',
             value: card.advancedJson ?? '',
             rows: 14,
+            class: 'code',
+        }) }}
+    </div>
+
+    <div id="card-raw" class="hidden">
+        {{ forms.textareaField({
+            label: "Raw payload body"|t('webhook-notifier'),
+            instructions: "A Twig template whose output is POSTed to the webhook as-is (Content-Type: application/json). The event context is available — e.g. with the Custom event source you can use {{ event.sender.title }}."|t('webhook-notifier'),
+            id: 'card-payload-json',
+            name: 'card[payloadJson]',
+            value: card.payloadJson ?? '',
+            placeholder: '{{ { id: event.sender.id, title: event.sender.title, site: event.sender.site.handle }|json_encode|raw }}',
+            rows: 12,
             class: 'code',
         }) }}
     </div>
@@ -256,6 +296,9 @@
         // Conditions can only test the source's fields; cards can use richer variables.
         if (hintEl) { hintEl.textContent = hintFrom(sourceFields[s]); }
         if (varHintEl) { varHintEl.textContent = hintFrom(sourceCardVariables[s] || sourceFields[s]); }
+        // The Sender Class / Event Name fields only apply to the Custom event source.
+        var eventConfig = document.getElementById('webhooknotifier-event-config');
+        if (eventConfig) { eventConfig.classList.toggle('hidden', s !== 'event'); }
         // Rebuild field <select>s for the new source, preserving any chosen value.
         rowsEl.querySelectorAll('.webhooknotifier-cond-field').forEach(function(sel) {
             sel.innerHTML = fieldOptions(sel.value);
@@ -267,14 +310,16 @@
     document.getElementById('webhooknotifier-cond-add').addEventListener('click', function() { addRow(); });
     syncSource();
 
-    // Card mode toggle.
+    // Card mode toggle (structured / advanced / raw).
     var modeField = document.getElementById('card-mode');
     var structured = document.getElementById('card-structured');
     var advanced = document.getElementById('card-advanced');
+    var raw = document.getElementById('card-raw');
     function syncMode() {
-        var advancedOn = modeField.value === 'advanced';
-        structured.classList.toggle('hidden', advancedOn);
-        advanced.classList.toggle('hidden', !advancedOn);
+        var m = modeField.value;
+        structured.classList.toggle('hidden', m !== 'structured');
+        advanced.classList.toggle('hidden', m !== 'advanced');
+        if (raw) { raw.classList.toggle('hidden', m !== 'raw'); }
     }
     if (modeField) {
         modeField.addEventListener('change', syncMode);

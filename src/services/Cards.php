@@ -38,30 +38,64 @@ class Cards extends Component
     public const MODE_STRUCTURED = 'structured';
 
     /**
-     * @var string The advanced (raw JSON) card mode.
+     * @var string The advanced (raw Adaptive Card JSON) card mode.
      */
     public const MODE_ADVANCED = 'advanced';
+
+    /**
+     * @var string The raw-payload mode — sends a custom body to any webhook,
+     * with no Teams wrapping.
+     */
+    public const MODE_RAW = 'raw';
+
+    /**
+     * @var string Delivery format: a Teams Adaptive Card (wrapped in the
+     * Workflows envelope).
+     */
+    public const FORMAT_TEAMS = 'teams';
+
+    /**
+     * @var string Delivery format: a raw body POSTed to the webhook as-is.
+     */
+    public const FORMAT_RAW = 'raw';
 
     // Public Methods
     // =========================================================================
 
     /**
-     * Renders a card config against an event context into Adaptive Card content.
+     * Renders a card config against an event context into a delivery descriptor.
+     *
+     * Returns `['format' => 'teams', 'content' => <Adaptive Card array>]` for the
+     * structured/advanced modes, or `['format' => 'raw', 'content' => <body string>]`
+     * for the raw mode.
      *
      * @param array<string, mixed> $config
      * @param array<string, mixed> $context
-     * @return array<string, mixed>
+     * @return array{format: string, content: array<string, mixed>|string}
      * @throws InvalidArgumentException if an advanced card produces invalid JSON.
      */
     public function render(array $config, array $context = []): array
     {
         $mode = $config['mode'] ?? self::MODE_STRUCTURED;
 
-        if ($mode === self::MODE_ADVANCED) {
-            return $this->_renderAdvanced((string)($config['advancedJson'] ?? ''), $context);
+        if ($mode === self::MODE_RAW) {
+            return [
+                'format' => self::FORMAT_RAW,
+                'content' => $this->_renderTemplate((string)($config['payloadJson'] ?? ''), $context),
+            ];
         }
 
-        return $this->_renderStructured($config, $context);
+        if ($mode === self::MODE_ADVANCED) {
+            return [
+                'format' => self::FORMAT_TEAMS,
+                'content' => $this->_renderAdvanced((string)($config['advancedJson'] ?? ''), $context),
+            ];
+        }
+
+        return [
+            'format' => self::FORMAT_TEAMS,
+            'content' => $this->_renderStructured($config, $context),
+        ];
     }
 
     /**
@@ -165,7 +199,9 @@ class Cards extends Component
         }
 
         try {
-            return trim(Craft::$app->getView()->renderObjectTemplate($template, $context));
+            // Pass the context as both the object (so `{shorthand}` works) and as
+            // top-level variables (so full Twig like `{{ event.sender.title }}` works).
+            return trim(Craft::$app->getView()->renderObjectTemplate($template, $context, $context));
         } catch (Throwable $e) {
             Craft::warning('Failed to render card template: ' . $e->getMessage(), 'webhook-notifier');
             return $template;

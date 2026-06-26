@@ -10,6 +10,7 @@ namespace coyshdigital\webhooknotifier\services;
 
 use coyshdigital\webhooknotifier\events\RegisterSourcesEvent;
 use coyshdigital\webhooknotifier\Plugin;
+use coyshdigital\webhooknotifier\sources\CustomEventSource;
 use coyshdigital\webhooknotifier\sources\EntrySource;
 use coyshdigital\webhooknotifier\sources\FreeformSource;
 use coyshdigital\webhooknotifier\sources\IntegrationFailureSource;
@@ -66,6 +67,7 @@ class Sources extends Component
                 UserSource::class,
                 IntegrationFailureSource::class,
                 QueueSizeSource::class,
+                CustomEventSource::class,
                 FreeformSource::class,
             ],
         ]);

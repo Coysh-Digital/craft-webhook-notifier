@@ -36,9 +36,10 @@ class SendNotification extends BaseJob implements RetryableJobInterface
     public ?int $connectionId = null;
 
     /**
-     * @var array<string, mixed> The Adaptive Card content to send.
+     * @var array{format?: string, content?: array<string, mixed>|string} The
+     * delivery payload descriptor (see {@see \coyshdigital\webhooknotifier\services\Cards::render()}).
      */
-    public array $cardContent = [];
+    public array $payload = [];
 
     /**
      * @var int|null The rule that produced this notification, for logging.
@@ -82,7 +83,7 @@ class SendNotification extends BaseJob implements RetryableJobInterface
             return;
         }
 
-        $delivery = $plugin->sender->send($connection, $this->cardContent, [
+        $delivery = $plugin->sender->send($connection, $this->payload, [
             'ruleId' => $this->ruleId,
             'sourceType' => $this->sourceType,
             'contextSummary' => $this->contextSummary,
