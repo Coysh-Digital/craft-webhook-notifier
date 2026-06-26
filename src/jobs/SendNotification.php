@@ -56,6 +56,12 @@ class SendNotification extends BaseJob implements RetryableJobInterface
      */
     public ?string $contextSummary = null;
 
+    /**
+     * @var string|null JSON-encoded serializable context, stored on the delivery
+     * so it can be resent later.
+     */
+    public ?string $context = null;
+
     // Public Methods
     // =========================================================================
 
@@ -76,6 +82,7 @@ class SendNotification extends BaseJob implements RetryableJobInterface
                 'ruleId' => $this->ruleId,
                 'connectionId' => $this->connectionId,
                 'sourceType' => $this->sourceType,
+                'context' => $this->context,
                 'contextSummary' => $this->contextSummary,
                 'status' => Deliveries::STATUS_FAILED,
                 'errorMessage' => Craft::t('webhook-notifier', 'The connection is missing or disabled.'),
@@ -86,6 +93,7 @@ class SendNotification extends BaseJob implements RetryableJobInterface
         $delivery = $plugin->sender->send($connection, $this->payload, [
             'ruleId' => $this->ruleId,
             'sourceType' => $this->sourceType,
+            'context' => $this->context,
             'contextSummary' => $this->contextSummary,
         ]);
 

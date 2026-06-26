@@ -33,7 +33,18 @@
                         <td data-title="{{ 'Source'|t('webhook-notifier') }}">{{ delivery.sourceType ?: '-' }}</td>
                         <td data-title="{{ 'Summary'|t('webhook-notifier') }}">{{ delivery.contextSummary ?: '-' }}</td>
                         <td data-title="{{ 'HTTP'|t('webhook-notifier') }}">{{ delivery.httpStatus ?: '-' }}</td>
-                        <td class="thin"><a href="{{ url('webhook-notifier/logs/' ~ delivery.id) }}">{{ "Details"|t('webhook-notifier') }}</a></td>
+                        <td class="thin nowrap">
+                            {% if canResend and delivery.ruleId %}
+                                <form method="post" style="display:inline" title="{{ 'Resend using the rule’s current card/payload'|t('webhook-notifier') }}">
+                                    {{ csrfInput() }}
+                                    {{ actionInput('webhook-notifier/logs/resend') }}
+                                    {{ redirectInput('webhook-notifier/logs') }}
+                                    {{ hiddenInput('id', delivery.id) }}
+                                    <button type="submit" class="btn small">{{ "Resend"|t('webhook-notifier') }}</button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ url('webhook-notifier/logs/' ~ delivery.id) }}">{{ "Details"|t('webhook-notifier') }}</a>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

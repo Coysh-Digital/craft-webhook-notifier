@@ -35,7 +35,7 @@
                             {% endif %}
                         </td>
                         <td data-title="{{ 'Enabled'|t('webhook-notifier') }}">
-                            {{ connection.enabled ? '<span class="status green"></span> ' ~ 'Yes'|t('webhook-notifier') : '<span class="status"></span> ' ~ 'No'|t('webhook-notifier') }}
+                            {% if connection.enabled %}<span class="status green"></span> {{ "Yes"|t('webhook-notifier') }}{% else %}<span class="status"></span> {{ "No"|t('webhook-notifier') }}{% endif %}
                         </td>
                         <td class="thin nowrap">
                             <form method="post" style="display:inline">

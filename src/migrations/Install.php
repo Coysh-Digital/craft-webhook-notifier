@@ -106,6 +106,7 @@ class Install extends Migration
             'ruleId' => $this->integer(),
             'connectionId' => $this->integer(),
             'sourceType' => $this->string(),
+            'context' => $this->text(),
             'status' => $this->string()->notNull(),
             'httpStatus' => $this->smallInteger()->unsigned(),
             'attempt' => $this->smallInteger()->unsigned()->notNull()->defaultValue(0),

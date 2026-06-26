@@ -10,6 +10,7 @@ namespace coyshdigital\webhooknotifier\sources;
 
 use Craft;
 use Solspace\Freeform\Events\Submissions\SubmitEvent;
+use Solspace\Freeform\Fields\Interfaces\NoStorageInterface;
 use Solspace\Freeform\Form\Form;
 use Solspace\Freeform\Services\SubmissionsService;
 use Throwable;
@@ -119,14 +120,21 @@ class FreeformSource extends BaseSource
         $fieldList = [];
         $lines = [];
 
-        foreach ($form->getFields() as $field) {
+        // Use the layout's fields (every page), not getFields() which only returns
+        // the current/last page. Skip HTML blocks, submit buttons, etc. (anything
+        // that doesn't store a value).
+        foreach ($form->getLayout()->getFields() as $field) {
+            if ($field instanceof NoStorageInterface) {
+                continue;
+            }
+
             $handle = $field->getHandle();
             if ($handle === null || $handle === '') {
                 continue;
             }
 
             try {
-                $value = $field->getValueAsString();
+                $value = trim($field->getValueAsString());
             } catch (Throwable) {
                 continue;
             }

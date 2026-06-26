@@ -1,5 +1,21 @@
 # Release Notes for Webhook Notifier
 
+## 1.5.0 - 2026-06-26
+
+### Added
+- **Resend** a delivery from the log - it re-renders the rule's *current* card /
+  payload against the delivery's saved context, so edits you've made since are
+  picked up. (Deliveries now store a serializable snapshot of their context.)
+- **"Freeform: basic fields"** card example - a fixed set of common contact
+  fields (name / email / phone / message), no loop.
+
+### Fixed
+- Freeform card variables (`{fields...}`, `{allFields}`, the "all submitted
+  fields" example) now read **every field across all pages** and skip HTML
+  blocks / submit buttons. Previously only the last page's fields came through.
+- The "Enabled" column on the Rules and Connections lists rendered the status
+  dot's `<span>` as literal text instead of showing the dot.
+
 ## 1.4.1 - 2026-06-26
 
 ### Fixed

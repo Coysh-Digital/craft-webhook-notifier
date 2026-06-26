@@ -72,6 +72,10 @@ class Deliveries extends Component
         if (isset($attributes['contextSummary'])) {
             $attributes['contextSummary'] = mb_substr((string)$attributes['contextSummary'], 0, 255);
         }
+        // Drop an oversized context rather than store truncated (invalid) JSON.
+        if (isset($attributes['context']) && mb_strlen((string)$attributes['context']) > self::MAX_BODY_LENGTH) {
+            $attributes['context'] = null;
+        }
 
         $record = new DeliveryRecord($attributes);
         $record->save();

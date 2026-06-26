@@ -10,7 +10,10 @@ namespace coyshdigital\webhooknotifier\controllers;
 
 use Craft;
 use coyshdigital\webhooknotifier\Plugin;
+use coyshdigital\webhooknotifier\services\Deliveries;
+use craft\helpers\Json;
 use craft\web\Controller;
+use Throwable;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -51,7 +54,68 @@ class LogsController extends Controller
         return $this->renderTemplate('webhook-notifier/logs/index', [
             'deliveries' => Plugin::getInstance()->deliveries->getRecentDeliveries($status),
             'status' => $status,
+            'canResend' => Craft::$app->getUser()->checkPermission(Plugin::PERMISSION_MANAGE_RULES),
         ]);
+    }
+
+    /**
+     * Re-sends a delivery, re-rendering the rule's *current* card/payload against
+     * the delivery's stored context (so payload/card edits are picked up).
+     *
+     * @return Response
+     * @throws NotFoundHttpException if the delivery doesn't exist.
+     */
+    public function actionResend(): Response
+    {
+        $this->requirePostRequest();
+        $this->requirePermission(Plugin::PERMISSION_MANAGE_RULES);
+
+        $plugin = Plugin::getInstance();
+        $session = Craft::$app->getSession();
+
+        $delivery = $plugin->deliveries->getDeliveryById((int)Craft::$app->getRequest()->getRequiredBodyParam('id'));
+        if ($delivery === null) {
+            throw new NotFoundHttpException('Delivery not found.');
+        }
+
+        $rule = $delivery->ruleId ? $plugin->rules->getRuleById((int)$delivery->ruleId) : null;
+        if ($rule === null) {
+            $session->setError(Craft::t('webhook-notifier', 'Can’t resend: the original rule no longer exists.'));
+            return $this->redirectToPostedUrl();
+        }
+
+        $connectionId = $rule->connectionId ?: $plugin->getSettings()->defaultConnectionId;
+        $connection = $connectionId ? $plugin->connections->getConnectionById((int)$connectionId) : null;
+        if ($connection === null) {
+            $session->setError(Craft::t('webhook-notifier', 'Can’t resend: the rule has no connection.'));
+            return $this->redirectToPostedUrl();
+        }
+
+        $context = $delivery->context ? (Json::decodeIfJson($delivery->context) ?: []) : [];
+
+        try {
+            $payload = $plugin->cards->render(Json::decodeIfJson((string)$rule->cardConfig) ?: [], $context);
+        } catch (Throwable $e) {
+            $session->setError(Craft::t('webhook-notifier', 'Couldn’t render the card: {error}', ['error' => $e->getMessage()]));
+            return $this->redirectToPostedUrl();
+        }
+
+        $new = $plugin->sender->send($connection, $payload, [
+            'ruleId' => $rule->id,
+            'sourceType' => $delivery->sourceType,
+            'context' => $delivery->context,
+            'contextSummary' => trim((string)$delivery->contextSummary . ' ' . Craft::t('webhook-notifier', '(resent)')),
+        ]);
+
+        if ($new->status === Deliveries::STATUS_SENT) {
+            $session->setNotice(Craft::t('webhook-notifier', 'Resent with the rule’s current card.'));
+        } else {
+            $session->setError(Craft::t('webhook-notifier', 'Resend failed: {error}', [
+                'error' => $new->errorMessage ?: Craft::t('webhook-notifier', 'see the log.'),
+            ]));
+        }
+
+        return $this->redirectToPostedUrl();
     }
 
     /**

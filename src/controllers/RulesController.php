@@ -275,7 +275,9 @@ JSON;
 }
 JSON;
 
-        $freeform = <<<'JSON'
+        // Loops every storable field that has a value (HTML blocks etc. are
+        // already excluded by FreeformSource), with no empty rows or trailing comma.
+        $freeformAll = <<<'JSON'
 {
   "type": "AdaptiveCard",
   "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
@@ -283,7 +285,26 @@ JSON;
   "body": [
     { "type": "TextBlock", "size": "Large", "weight": "Bolder", "wrap": true, "text": "New {formName} submission" },
     { "type": "FactSet", "facts": [
-      {% for f in object.fieldList %}{ "title": {{ f.label|json_encode|raw }}, "value": {{ (f.value ?: '-')|json_encode|raw }} }{% if not loop.last %},{% endif %}{% endfor %}
+      {% set rows = object.fieldList|filter(f => f.value != '') %}{% for f in rows %}{ "title": {{ f.label|json_encode|raw }}, "value": {{ f.value|json_encode|raw }} }{% if not loop.last %},{% endif %}{% endfor %}
+    ]}
+  ]
+}
+JSON;
+
+        // A fixed set of common contact-form fields (edit the handles to match
+        // your form). Missing fields just render empty rather than erroring.
+        $freeformBasic = <<<'JSON'
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    { "type": "TextBlock", "size": "Large", "weight": "Bolder", "wrap": true, "text": "New {formName} submission" },
+    { "type": "FactSet", "facts": [
+      { "title": "Name", "value": {{ (fields.name ?? fields.fullName ?? '')|json_encode|raw }} },
+      { "title": "Email", "value": {{ (fields.email ?? '')|json_encode|raw }} },
+      { "title": "Phone", "value": {{ (fields.phone ?? '')|json_encode|raw }} },
+      { "title": "Message", "value": {{ (fields.message ?? '')|json_encode|raw }} }
     ]}
   ]
 }
@@ -292,7 +313,8 @@ JSON;
         return [
             ['label' => Craft::t('webhook-notifier', 'Heading + message'), 'template' => $heading],
             ['label' => Craft::t('webhook-notifier', 'Heading + facts + button'), 'template' => $factsButton],
-            ['label' => Craft::t('webhook-notifier', 'Freeform: all submitted fields'), 'template' => $freeform],
+            ['label' => Craft::t('webhook-notifier', 'Freeform: all submitted fields'), 'template' => $freeformAll],
+            ['label' => Craft::t('webhook-notifier', 'Freeform: basic fields'), 'template' => $freeformBasic],
         ];
     }
 

@@ -70,6 +70,7 @@ class Sender extends Component
             'ruleId' => $context['ruleId'] ?? null,
             'connectionId' => $connection->id,
             'sourceType' => $context['sourceType'] ?? null,
+            'context' => $context['context'] ?? null,
             'contextSummary' => $context['contextSummary'] ?? null,
             'attempt' => (int)($context['attempt'] ?? 1),
             'requestPayload' => $loggedPayload,

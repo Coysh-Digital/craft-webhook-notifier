@@ -17,6 +17,7 @@ use craft\db\ActiveRecord;
  * @property int|null $ruleId
  * @property int|null $connectionId
  * @property string|null $sourceType
+ * @property string|null $context JSON-encoded serializable event context, for resends.
  * @property string $status
  * @property int|null $httpStatus
  * @property int $attempt

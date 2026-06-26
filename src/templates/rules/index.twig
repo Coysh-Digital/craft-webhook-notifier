@@ -28,7 +28,9 @@
                     <tr>
                         <th scope="row"><a href="{{ url('webhook-notifier/rules/' ~ rule.id) }}">{{ rule.name }}</a></th>
                         <td>{{ sourceOptions[rule.sourceType] ?? rule.sourceType }}</td>
-                        <td>{{ rule.enabled ? '<span class="status green"></span> ' ~ 'Yes'|t('webhook-notifier') : '<span class="status"></span> ' ~ 'No'|t('webhook-notifier') }}</td>
+                        <td>
+                            {% if rule.enabled %}<span class="status green"></span> {{ "Yes"|t('webhook-notifier') }}{% else %}<span class="status"></span> {{ "No"|t('webhook-notifier') }}{% endif %}
+                        </td>
                         <td data-title="{{ 'Activity'|t('webhook-notifier') }}">
                             {% set spark = sparklines[rule.id] %}
                             {% if spark %}

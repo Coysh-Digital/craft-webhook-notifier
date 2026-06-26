@@ -130,6 +130,10 @@ class Rules extends Component
 
         $queued = 0;
 
+        // A serializable snapshot of the context, stored on each delivery so it
+        // can be re-rendered and resent later (objects are dropped).
+        $contextJson = Json::encode($this->_serializableContext($context));
+
         foreach ($rules as $rule) {
             try {
                 if (!$this->_passesCondition($rule, $context)) {
@@ -142,6 +146,7 @@ class Rules extends Component
                     $plugin->deliveries->log([
                         'ruleId' => $rule->id,
                         'sourceType' => $sourceType,
+                        'context' => $contextJson,
                         'status' => Deliveries::STATUS_FAILED,
                         'contextSummary' => $this->_summary($context, $sourceType),
                         'errorMessage' => Craft::t('webhook-notifier', 'No connection set on the rule or in settings.'),
@@ -157,6 +162,7 @@ class Rules extends Component
                     'payload' => $payload,
                     'ruleId' => $rule->id,
                     'sourceType' => $sourceType,
+                    'context' => $contextJson,
                     'contextSummary' => $this->_summary($context, $sourceType),
                 ]));
 
@@ -166,6 +172,7 @@ class Rules extends Component
                 $plugin->deliveries->log([
                     'ruleId' => $rule->id,
                     'sourceType' => $sourceType,
+                    'context' => $contextJson,
                     'status' => Deliveries::STATUS_FAILED,
                     'contextSummary' => $this->_summary($context, $sourceType),
                     'errorMessage' => $e->getMessage(),
@@ -174,6 +181,34 @@ class Rules extends Component
         }
 
         return $queued;
+    }
+
+    /**
+     * Returns the JSON-serializable subset of a context (scalars and plain
+     * arrays), dropping objects like elements and event objects so it can be
+     * stored on a delivery and used to resend.
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function _serializableContext(array $context): array
+    {
+        $clean = [];
+
+        foreach ($context as $key => $value) {
+            if ($value === null || is_scalar($value)) {
+                $clean[$key] = $value;
+            } elseif (is_array($value)) {
+                try {
+                    Json::encode($value);
+                    $clean[$key] = $value;
+                } catch (Throwable) {
+                    // Skip arrays that contain non-encodable values.
+                }
+            }
+        }
+
+        return $clean;
     }
 
     // Private Methods
