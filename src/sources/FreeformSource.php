@@ -9,6 +9,7 @@
 namespace coyshdigital\webhooknotifier\sources;
 
 use Craft;
+use craft\helpers\UrlHelper;
 use Solspace\Freeform\Events\Submissions\SubmitEvent;
 use Solspace\Freeform\Fields\Interfaces\NoStorageInterface;
 use Solspace\Freeform\Form\Form;
@@ -87,6 +88,7 @@ class FreeformSource extends BaseSource
         return array_merge($this->contextSchema(), [
             'fields.<handle>' => Craft::t('webhook-notifier', 'A submitted field value, by its handle'),
             'allFields' => Craft::t('webhook-notifier', 'All submitted fields, formatted'),
+            'submissionUrl' => Craft::t('webhook-notifier', 'Control-panel link to the submission'),
         ]);
     }
 
@@ -155,6 +157,7 @@ class FreeformSource extends BaseSource
             'formName' => $form->getName(),
             'formId' => $form->getId(),
             'submissionId' => $submission->id,
+            'submissionUrl' => UrlHelper::cpUrl('freeform/submissions/' . $submission->id),
             'fields' => $fields,
             'fieldList' => $fieldList,
             'allFields' => implode("\n\n", $lines),

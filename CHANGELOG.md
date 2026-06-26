@@ -1,5 +1,12 @@
 # Release Notes for Webhook Notifier
 
+## 1.5.2 - 2026-06-26
+
+### Added
+- Freeform submissions now expose `{submissionUrl}` - a control-panel link to the
+  submission - so you can add a "View submission" button to the card. It's stored
+  in the delivery context, so it survives resends.
+
 ## 1.5.1 - 2026-06-26
 
 ### Fixed
