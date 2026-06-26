@@ -2,11 +2,11 @@
 
 Webhook Notifier sends a webhook whenever something happens on your Craft site,
 using rules you set up in the control panel. It started life as a Microsoft Teams
-notifier — Microsoft retired the old Incoming Webhook connectors in May 2026, and
+notifier - Microsoft retired the old Incoming Webhook connectors in May 2026, and
 the replacement (Power Automate Workflows) needs its Adaptive Cards wrapped in a
 particular envelope, which this plugin handles for you. It has since grown into a
-general webhook tool: it can post to **any** webhook — Zapier, Make, Slack, your
-own endpoint — with whatever payload you define.
+general webhook tool: it can post to **any** webhook - Zapier, Make, Slack, your
+own endpoint - with whatever payload you define.
 
 So there are two halves to it: a delivery side (Teams Adaptive Cards, or a raw
 payload of your choosing) and a trigger side (built-in sources, or any Craft/Yii
@@ -20,7 +20,7 @@ event you name).
   reference to an environment variable so the secret stays out of your database
   and version control.
 - **Two payload formats.** Build a Microsoft Teams Adaptive Card (structured
-  fields or raw card JSON), or send a **raw payload** — a Twig template whose
+  fields or raw card JSON), or send a **raw payload** - a Twig template whose
   output is POSTed to the webhook as-is, for any non-Teams target.
 - **Triggers.** Built-in sources for common cases, plus a **Custom event** source
   that listens on any class and event you specify.
@@ -46,7 +46,7 @@ php craft plugin/install webhook-notifier
 The **Custom event** source is the general-purpose trigger, and it works much
 like Craft's first-party Webhook plugin: you give a rule a **Sender Class** (for
 example `craft\elements\Entry`) and an **Event Name** (for example `afterSave`),
-and the moment that event fires, the rule runs. There's no polling and no cron —
+and the moment that event fires, the rule runs. There's no polling and no cron -
 it's immediate.
 
 When the event fires, the event object is handed to your payload as `event`, so
@@ -71,7 +71,7 @@ Teams is still a first-class target, with proper Adaptive Card support.
 
 1. In Teams, open the channel → **⋯ → Workflows**.
 2. Choose the **“Post to a channel when a webhook request is received”** template.
-3. Complete the wizard **signed in as a member of that team** (this matters — see
+3. Complete the wizard **signed in as a member of that team** (this matters - see
    Troubleshooting), and copy the **HTTP POST URL**.
 4. In Craft: **Webhook Notifier → Connections → New**, paste the URL (or an
    `$ENV_VAR` reference), and use **Send test card** to confirm it works.

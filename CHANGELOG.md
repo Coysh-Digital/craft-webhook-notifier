@@ -1,10 +1,27 @@
 # Release Notes for Webhook Notifier
 
+## 1.4.0 - 2026-06-26
+
+### Added
+- **Activity sparklines** on the rules list - a 14-day mini bar chart per rule
+  (sent in green, failed in red) plus a sent/failed count, so you can see each
+  rule's recent history at a glance.
+
+### Changed
+- Settings are now read-only wherever admin changes are disabled (they live in
+  project config and deploy from there); editable where admin changes are
+  allowed.
+- Replaced em/en dashes with hyphens throughout.
+
+### Fixed
+- The control-panel sidebar icon now shows - added the `icon-mask.svg` Craft uses
+  for the nav, and switched both icons to a filled silhouette.
+
 ## 1.3.1 - 2026-06-26
 
 ### Changed
 - New plugin icon (a “fan-out” webhook mark).
-- Control-panel wording is now webhook-agnostic — Microsoft Teams is still the
+- Control-panel wording is now webhook-agnostic - Microsoft Teams is still the
   lead example, but the Connections and Rules screens make clear any webhook
   (Zapier, Slack, custom endpoints) works.
 
@@ -16,7 +33,7 @@
   like Craft's built-in Webhook plugin. The event object is available in the
   payload as `{{ event }}`.
 - **Raw payload mode.** A new card mode that POSTs a Twig-rendered body to the
-  webhook as-is (Content-Type `application/json`) with no Teams wrapping — so the
+  webhook as-is (Content-Type `application/json`) with no Teams wrapping - so the
   plugin now works with any webhook (Zapier, Make, Slack, custom endpoints), not
   just Microsoft Teams.
 
@@ -27,7 +44,7 @@
 
 ## 1.2.0 - 2026-06-25
 
-> Renamed from “MS Teams Notifications” to **Webhook Notifier** — Teams is still
+> Renamed from “MS Teams Notifications” to **Webhook Notifier** - Teams is still
 > the delivery target, but the name leaves room for more webhook destinations.
 
 ### Added

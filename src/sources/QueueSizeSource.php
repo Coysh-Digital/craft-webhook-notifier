@@ -88,6 +88,6 @@ class QueueSizeSource extends BaseSource
      */
     public function attachListeners(): void
     {
-        // Polled, not event-driven — see the webhook-notifier/monitor/queue command.
+        // Polled, not event-driven - see the webhook-notifier/monitor/queue command.
     }
 }

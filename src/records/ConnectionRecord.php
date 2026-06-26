@@ -11,7 +11,7 @@ namespace coyshdigital\webhooknotifier\records;
 use craft\db\ActiveRecord;
 
 /**
- * Connection record — a named Teams channel destination.
+ * Connection record - a named Teams channel destination.
  *
  * @property int $id
  * @property string $name

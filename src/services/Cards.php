@@ -17,7 +17,7 @@ use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
 /**
- * Cards service — renders a stored card config against an event context into the
+ * Cards service - renders a stored card config against an event context into the
  * Adaptive Card content array.
  *
  * A card config has a `mode` of either `structured` (title / body / facts /
@@ -43,7 +43,7 @@ class Cards extends Component
     public const MODE_ADVANCED = 'advanced';
 
     /**
-     * @var string The raw-payload mode — sends a custom body to any webhook,
+     * @var string The raw-payload mode - sends a custom body to any webhook,
      * with no Teams wrapping.
      */
     public const MODE_RAW = 'raw';

@@ -9,12 +9,12 @@
         <tbody>
             <tr><th>{{ "Status"|t('webhook-notifier') }}</th><td>{{ delivery.status }}</td></tr>
             <tr><th>{{ "When"|t('webhook-notifier') }}</th><td>{{ delivery.dateCreated ? delivery.dateCreated|datetime('long') }}</td></tr>
-            <tr><th>{{ "Source"|t('webhook-notifier') }}</th><td>{{ delivery.sourceType ?: '—' }}</td></tr>
-            <tr><th>{{ "Rule ID"|t('webhook-notifier') }}</th><td>{{ delivery.ruleId ?: '—' }}</td></tr>
-            <tr><th>{{ "Connection ID"|t('webhook-notifier') }}</th><td>{{ delivery.connectionId ?: '—' }}</td></tr>
+            <tr><th>{{ "Source"|t('webhook-notifier') }}</th><td>{{ delivery.sourceType ?: '-' }}</td></tr>
+            <tr><th>{{ "Rule ID"|t('webhook-notifier') }}</th><td>{{ delivery.ruleId ?: '-' }}</td></tr>
+            <tr><th>{{ "Connection ID"|t('webhook-notifier') }}</th><td>{{ delivery.connectionId ?: '-' }}</td></tr>
             <tr><th>{{ "Attempt"|t('webhook-notifier') }}</th><td>{{ delivery.attempt }}</td></tr>
-            <tr><th>{{ "HTTP status"|t('webhook-notifier') }}</th><td>{{ delivery.httpStatus ?: '—' }}</td></tr>
-            <tr><th>{{ "Summary"|t('webhook-notifier') }}</th><td>{{ delivery.contextSummary ?: '—' }}</td></tr>
+            <tr><th>{{ "HTTP status"|t('webhook-notifier') }}</th><td>{{ delivery.httpStatus ?: '-' }}</td></tr>
+            <tr><th>{{ "Summary"|t('webhook-notifier') }}</th><td>{{ delivery.contextSummary ?: '-' }}</td></tr>
             {% if delivery.errorMessage %}
                 <tr><th>{{ "Error"|t('webhook-notifier') }}</th><td>{{ delivery.errorMessage }}</td></tr>
             {% endif %}

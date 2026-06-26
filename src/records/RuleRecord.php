@@ -12,7 +12,7 @@ use craft\db\ActiveRecord;
 use yii\db\ActiveQueryInterface;
 
 /**
- * Rule record — one no-code notification rule.
+ * Rule record - one no-code notification rule.
  *
  * @property int $id
  * @property string $name

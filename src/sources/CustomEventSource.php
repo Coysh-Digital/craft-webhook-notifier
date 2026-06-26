@@ -17,7 +17,7 @@ use yii\base\Event;
  * Notification source: any Yii/Craft event on any class.
  *
  * Each rule using this source names a **Sender Class** (e.g. `craft\elements\Entry`)
- * and an **Event Name** (e.g. `afterSave`) — exactly like Craft's first-party
+ * and an **Event Name** (e.g. `afterSave`) - exactly like Craft's first-party
  * Webhook plugin. At boot we read those rules, group them by class + event, and
  * attach one listener per unique pair. When the event fires, the event object is
  * handed to the card/payload as `event` (so you can use `{{ event.sender.title }}`).
@@ -54,7 +54,7 @@ class CustomEventSource extends BaseSource
      */
     public function description(): string
     {
-        return Craft::t('webhook-notifier', 'Fires on any Yii/Craft event you name — give it a Sender Class (e.g. craft\\elements\\Entry) and an Event Name (e.g. afterSave), just like Craft’s built-in Webhook plugin. The triggering event is available in the card/payload as {{ event }} (e.g. {{ event.sender.title }}). Best paired with the “Raw payload” card mode when you’re posting to a non-Teams webhook.');
+        return Craft::t('webhook-notifier', 'Fires on any Yii/Craft event you name - give it a Sender Class (e.g. craft\\elements\\Entry) and an Event Name (e.g. afterSave), just like Craft’s built-in Webhook plugin. The triggering event is available in the card/payload as {{ event }} (e.g. {{ event.sender.title }}). Best paired with the “Raw payload” card mode when you’re posting to a non-Teams webhook.');
     }
 
     /**

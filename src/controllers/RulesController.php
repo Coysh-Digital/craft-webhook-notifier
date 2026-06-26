@@ -12,6 +12,7 @@ use Craft;
 use coyshdigital\webhooknotifier\Plugin;
 use coyshdigital\webhooknotifier\records\RuleRecord;
 use coyshdigital\webhooknotifier\services\Cards;
+use craft\helpers\DateTimeHelper;
 use craft\helpers\Json;
 use craft\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -26,6 +27,14 @@ use yii\web\Response;
  */
 class RulesController extends Controller
 {
+    // Constants
+    // =========================================================================
+
+    /**
+     * @var int How many days of delivery history the rules-list sparklines show.
+     */
+    public const SPARK_DAYS = 14;
+
     // Public Methods
     // =========================================================================
 
@@ -52,10 +61,13 @@ class RulesController extends Controller
     public function actionIndex(): Response
     {
         $plugin = Plugin::getInstance();
+        $rules = $plugin->rules->getAllRules();
 
         return $this->renderTemplate('webhook-notifier/rules/index', [
-            'rules' => $plugin->rules->getAllRules(),
+            'rules' => $rules,
             'sourceOptions' => $plugin->sources->getSourceOptions(),
+            'sparkDays' => self::SPARK_DAYS,
+            'sparklines' => $this->_sparklines($rules, self::SPARK_DAYS),
         ]);
     }
 
@@ -271,7 +283,7 @@ JSON;
   "body": [
     { "type": "TextBlock", "size": "Large", "weight": "Bolder", "wrap": true, "text": "New {formName} submission" },
     { "type": "FactSet", "facts": [
-      {% for f in object.fieldList %}{ "title": {{ f.label|json_encode|raw }}, "value": {{ (f.value ?: '—')|json_encode|raw }} }{% if not loop.last %},{% endif %}{% endfor %}
+      {% for f in object.fieldList %}{ "title": {{ f.label|json_encode|raw }}, "value": {{ (f.value ?: '-')|json_encode|raw }} }{% if not loop.last %},{% endif %}{% endfor %}
     ]}
   ]
 }
@@ -282,5 +294,46 @@ JSON;
             ['label' => Craft::t('webhook-notifier', 'Heading + facts + button'), 'template' => $factsButton],
             ['label' => Craft::t('webhook-notifier', 'Freeform: all submitted fields'), 'template' => $freeform],
         ];
+    }
+
+    /**
+     * Builds per-rule activity sparkline data for the rules list.
+     *
+     * @param RuleRecord[] $rules
+     * @param int $days
+     * @return array<int, array{days: array<int, array{date: string, sent: int, failed: int, total: int}>, max: int, sent: int, failed: int}>
+     */
+    private function _sparklines(array $rules, int $days): array
+    {
+        $counts = Plugin::getInstance()->deliveries->getDailyCountsByRule($days);
+
+        // Day keys (UTC, to match the SQL DATE()), oldest to newest.
+        $today = DateTimeHelper::currentUTCDateTime()->setTime(0, 0);
+        $dayKeys = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dayKeys[] = (clone $today)->modify("-$i days")->format('Y-m-d');
+        }
+
+        $sparklines = [];
+
+        foreach ($rules as $rule) {
+            $ruleCounts = $counts[$rule->id] ?? [];
+            $series = [];
+            $max = 0;
+            $sent = 0;
+            $failed = 0;
+
+            foreach ($dayKeys as $dayKey) {
+                $day = $ruleCounts[$dayKey] ?? ['sent' => 0, 'failed' => 0, 'total' => 0];
+                $series[] = ['date' => $dayKey] + $day;
+                $max = max($max, $day['total']);
+                $sent += $day['sent'];
+                $failed += $day['failed'];
+            }
+
+            $sparklines[$rule->id] = ['days' => $series, 'max' => $max, 'sent' => $sent, 'failed' => $failed];
+        }
+
+        return $sparklines;
     }
 }

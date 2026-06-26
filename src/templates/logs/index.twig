@@ -30,9 +30,9 @@
                         <td data-title="{{ 'Status'|t('webhook-notifier') }}">
                             <span class="status {{ statusColors[delivery.status] ?? 'grey' }}"></span>{{ delivery.status }}
                         </td>
-                        <td data-title="{{ 'Source'|t('webhook-notifier') }}">{{ delivery.sourceType ?: '—' }}</td>
-                        <td data-title="{{ 'Summary'|t('webhook-notifier') }}">{{ delivery.contextSummary ?: '—' }}</td>
-                        <td data-title="{{ 'HTTP'|t('webhook-notifier') }}">{{ delivery.httpStatus ?: '—' }}</td>
+                        <td data-title="{{ 'Source'|t('webhook-notifier') }}">{{ delivery.sourceType ?: '-' }}</td>
+                        <td data-title="{{ 'Summary'|t('webhook-notifier') }}">{{ delivery.contextSummary ?: '-' }}</td>
+                        <td data-title="{{ 'HTTP'|t('webhook-notifier') }}">{{ delivery.httpStatus ?: '-' }}</td>
                         <td class="thin"><a href="{{ url('webhook-notifier/logs/' ~ delivery.id) }}">{{ "Details"|t('webhook-notifier') }}</a></td>
                     </tr>
                 {% endfor %}

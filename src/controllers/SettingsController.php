@@ -59,6 +59,9 @@ class SettingsController extends Controller
             'settings' => $plugin->getSettings(),
             'connectionOptions' => $connectionOptions,
             'overrides' => array_keys(Craft::$app->getConfig()->getConfigFromFile('webhook-notifier')),
+            // Settings live in project config, so they're read-only wherever admin
+            // changes are disabled (typically staging/production).
+            'readOnly' => !Craft::$app->getConfig()->getGeneral()->allowAdminChanges,
         ]);
     }
 
@@ -70,6 +73,12 @@ class SettingsController extends Controller
     public function actionSave(): ?Response
     {
         $this->requirePostRequest();
+
+        // Plugin settings are stored in project config; saving them is blocked
+        // wherever admin changes are disabled.
+        if (!Craft::$app->getConfig()->getGeneral()->allowAdminChanges) {
+            throw new ForbiddenHttpException('Settings are read-only when admin changes are disabled. Edit them in project config or via config/webhook-notifier.php.');
+        }
 
         $plugin = Plugin::getInstance();
         $settings = (array)Craft::$app->getRequest()->getBodyParam('settings', []);

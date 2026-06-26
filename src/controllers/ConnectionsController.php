@@ -182,7 +182,7 @@ class ConnectionsController extends Controller
         ]);
 
         if ($delivery->status === Deliveries::STATUS_SENT) {
-            Craft::$app->getSession()->setNotice(Craft::t('webhook-notifier', 'Test sent — check the destination.'));
+            Craft::$app->getSession()->setNotice(Craft::t('webhook-notifier', 'Test sent - check the destination.'));
         } else {
             Craft::$app->getSession()->setError(Craft::t('webhook-notifier', 'Test send failed: {error}', [
                 'error' => $delivery->errorMessage ?: Craft::t('webhook-notifier', 'see the delivery log.'),

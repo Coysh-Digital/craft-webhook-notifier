@@ -9,7 +9,7 @@
 
 {% block content %}
     <p class="light" style="margin-bottom:24px; max-width:48em">
-        {{ "A connection is somewhere to send notifications — any webhook URL. That might be a Microsoft Teams channel (via Power Automate Workflows), or Zapier, Slack, a custom endpoint, and so on. Add one, send a test to check it responds, then point your rules at it."|t('webhook-notifier') }}
+        {{ "A connection is somewhere to send notifications - any webhook URL. That might be a Microsoft Teams channel (via Power Automate Workflows), or Zapier, Slack, a custom endpoint, and so on. Add one, send a test to check it responds, then point your rules at it."|t('webhook-notifier') }}
     </p>
 
     {% if connections|length %}
@@ -59,6 +59,6 @@
         </table>
     {% else %}
         <p>{{ "No connections yet."|t('webhook-notifier') }}</p>
-        <p>{{ "A connection holds one webhook URL — a Microsoft Teams channel, or any other webhook (Zapier, Slack, a custom endpoint…)."|t('webhook-notifier') }}</p>
+        <p>{{ "A connection holds one webhook URL - a Microsoft Teams channel, or any other webhook (Zapier, Slack, a custom endpoint…)."|t('webhook-notifier') }}</p>
     {% endif %}
 {% endblock %}

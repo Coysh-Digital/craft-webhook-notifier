@@ -18,7 +18,7 @@ use Throwable;
 use yii\base\Component;
 
 /**
- * Sender service — wraps an Adaptive Card in a Workflows envelope, POSTs it to a
+ * Sender service - wraps an Adaptive Card in a Workflows envelope, POSTs it to a
  * connection's webhook, and records the outcome in the delivery log.
  *
  * @author Coysh Digital
@@ -33,9 +33,9 @@ class Sender extends Component
      * Sends a payload to a connection and logs the result.
      *
      * The `$payload` descriptor is what {@see Cards::render()} returns:
-     *  - `['format' => 'teams', 'content' => <Adaptive Card array>]` — wrapped in
+     *  - `['format' => 'teams', 'content' => <Adaptive Card array>]` - wrapped in
      *    the Power Automate Workflows envelope.
-     *  - `['format' => 'raw', 'content' => <body string>]` — POSTed to the webhook
+     *  - `['format' => 'raw', 'content' => <body string>]` - POSTed to the webhook
      *    as-is (for Zapier, Make, Slack, or any other webhook).
      *
      * Always returns a saved {@see DeliveryRecord}; a transient failure is
@@ -107,7 +107,7 @@ class Sender extends Component
 
             return $deliveries->log($attributes);
         } catch (Throwable $e) {
-            // Network/transport failure — treat as transient.
+            // Network/transport failure - treat as transient.
             return $deliveries->log(array_merge($attributes, [
                 'status' => Deliveries::STATUS_RETRYING,
                 'errorMessage' => $e->getMessage(),

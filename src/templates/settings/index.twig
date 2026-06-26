@@ -3,11 +3,18 @@
 
 {% set title = "Settings"|t('webhook-notifier') %}
 {% set selectedSubnavItem = 'settings' %}
-{% set fullPageForm = true %}
+{# A read-only view doesn't need a submittable form (so no Save button shows). #}
+{% set fullPageForm = not readOnly %}
 
 {% block content %}
-    <input type="hidden" name="action" value="webhook-notifier/settings/save">
-    {{ redirectInput('webhook-notifier/settings') }}
+    {% if readOnly %}
+        <blockquote class="note">
+            {{ "These settings are stored in project config, and admin changes are disabled in this environment, so they're read-only here. Edit them where admin changes are allowed (usually local), or in config/webhook-notifier.php, then deploy."|t('webhook-notifier') }}
+        </blockquote>
+    {% else %}
+        <input type="hidden" name="action" value="webhook-notifier/settings/save">
+        {{ redirectInput('webhook-notifier/settings') }}
+    {% endif %}
 
     {{ forms.lightswitchField({
         first: true,
@@ -15,20 +22,21 @@
         instructions: "Global on/off switch for all rule-driven notifications."|t('webhook-notifier'),
         name: 'settings[enabled]',
         on: settings.enabled,
-        disabled: 'enabled' in overrides,
+        disabled: readOnly or 'enabled' in overrides,
     }) }}
 
     {{ forms.selectField({
         label: "Default connection"|t('webhook-notifier'),
-        instructions: "Used by rules that don’t pick their own connection."|t('webhook-notifier'),
+        instructions: "Used by rules that don't pick their own connection."|t('webhook-notifier'),
         name: 'settings[defaultConnectionId]',
         options: connectionOptions,
         value: settings.defaultConnectionId,
-        disabled: 'defaultConnectionId' in overrides,
+        disabled: readOnly or 'defaultConnectionId' in overrides,
     }) }}
 
     {{ forms.selectField({
         label: "Default card version"|t('webhook-notifier'),
+        instructions: "Adaptive Card schema version for new Teams cards."|t('webhook-notifier'),
         name: 'settings[defaultCardVersion]',
         options: {
             '1.2': '1.2',
@@ -37,7 +45,7 @@
             '1.5': '1.5',
         },
         value: settings.defaultCardVersion,
-        disabled: 'defaultCardVersion' in overrides,
+        disabled: readOnly or 'defaultCardVersion' in overrides,
     }) }}
 
     {{ forms.textField({
@@ -47,7 +55,7 @@
         name: 'settings[logRetentionDays]',
         value: settings.logRetentionDays,
         size: 6,
-        disabled: 'logRetentionDays' in overrides,
+        disabled: readOnly or 'logRetentionDays' in overrides,
     }) }}
 
     {{ forms.textField({
@@ -56,7 +64,7 @@
         name: 'settings[httpTimeout]',
         value: settings.httpTimeout,
         size: 6,
-        disabled: 'httpTimeout' in overrides,
+        disabled: readOnly or 'httpTimeout' in overrides,
     }) }}
 
     {{ forms.textField({
@@ -66,6 +74,6 @@
         name: 'settings[maxRetries]',
         value: settings.maxRetries,
         size: 6,
-        disabled: 'maxRetries' in overrides,
+        disabled: readOnly or 'maxRetries' in overrides,
     }) }}
 {% endblock %}

@@ -69,7 +69,7 @@ class MonitorController extends Controller
         $cooldownKey = 'webhook-notifier:monitor:queue:cooldown';
 
         if ($this->cooldown > 0 && $cache->get($cooldownKey)) {
-            $this->stdout(Craft::t('webhook-notifier', 'Within cooldown window — skipping.') . PHP_EOL, Console::FG_GREY);
+            $this->stdout(Craft::t('webhook-notifier', 'Within cooldown window - skipping.') . PHP_EOL, Console::FG_GREY);
             return ExitCode::OK;
         }
 

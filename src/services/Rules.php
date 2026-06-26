@@ -18,7 +18,7 @@ use Throwable;
 use yii\base\Component;
 
 /**
- * Rules service — CRUD for notification rules, and the dispatch path that turns
+ * Rules service - CRUD for notification rules, and the dispatch path that turns
  * a fired source event into queued notifications.
  *
  * @author Coysh Digital

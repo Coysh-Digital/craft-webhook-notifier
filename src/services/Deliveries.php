@@ -14,9 +14,10 @@ use craft\db\Query;
 use craft\helpers\Db;
 use DateTime;
 use yii\base\Component;
+use yii\db\Expression;
 
 /**
- * Deliveries service — writes, reads, and prunes the delivery log.
+ * Deliveries service - writes, reads, and prunes the delivery log.
  *
  * @author Coysh Digital
  * @since 1.0.0
@@ -107,6 +108,49 @@ class Deliveries extends Component
         }
 
         return $query->all();
+    }
+
+    /**
+     * Returns per-day delivery counts for each rule over the last N days, for
+     * the rules-list activity sparklines.
+     *
+     * Shape: `[ruleId => ['Y-m-d' => ['sent' => int, 'failed' => int, 'total' => int]]]`,
+     * where "failed" covers every non-`sent` status.
+     *
+     * @param int $days
+     * @return array<int, array<string, array{sent: int, failed: int, total: int}>>
+     */
+    public function getDailyCountsByRule(int $days): array
+    {
+        $cutoff = (new DateTime())->modify('-' . max(0, $days - 1) . ' days')->setTime(0, 0);
+
+        $rows = (new Query())
+            ->select([
+                'ruleId',
+                'status',
+                'd' => new Expression('DATE([[dateCreated]])'),
+                'c' => new Expression('COUNT(*)'),
+            ])
+            ->from(DeliveryRecord::tableName())
+            ->where(['>=', 'dateCreated', Db::prepareDateForDb($cutoff)])
+            ->andWhere(['not', ['ruleId' => null]])
+            ->groupBy(['ruleId', 'd', 'status'])
+            ->all();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $ruleId = (int)$row['ruleId'];
+            $day = substr((string)$row['d'], 0, 10);
+            $count = (int)$row['c'];
+            $bucket = $row['status'] === self::STATUS_SENT ? 'sent' : 'failed';
+
+            $map[$ruleId][$day] ??= ['sent' => 0, 'failed' => 0, 'total' => 0];
+            $map[$ruleId][$day][$bucket] += $count;
+            $map[$ruleId][$day]['total'] += $count;
+        }
+
+        return $map;
     }
 
     /**

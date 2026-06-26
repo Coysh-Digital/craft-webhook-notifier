@@ -63,7 +63,7 @@
 
     {{ forms.selectField({
         label: "Connection"|t('webhook-notifier'),
-        instructions: "Where to send it — a Teams channel, or any other webhook."|t('webhook-notifier'),
+        instructions: "Where to send it - a Teams channel, or any other webhook."|t('webhook-notifier'),
         id: 'connectionId',
         name: 'connectionId',
         options: connectionOptions,
@@ -193,7 +193,7 @@
     <div id="card-raw" class="hidden">
         {{ forms.textareaField({
             label: "Raw payload body"|t('webhook-notifier'),
-            instructions: "A Twig template whose output is POSTed to the webhook as-is (Content-Type: application/json). The event context is available — e.g. with the Custom event source you can use {{ event.sender.title }}."|t('webhook-notifier'),
+            instructions: "A Twig template whose output is POSTed to the webhook as-is (Content-Type: application/json). The event context is available - e.g. with the Custom event source you can use {{ event.sender.title }}."|t('webhook-notifier'),
             id: 'card-payload-json',
             name: 'card[payloadJson]',
             value: card.payloadJson ?? '',

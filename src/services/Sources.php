@@ -20,7 +20,7 @@ use coyshdigital\webhooknotifier\sources\UserSource;
 use yii\base\Component;
 
 /**
- * Sources service — the registry of notification sources.
+ * Sources service - the registry of notification sources.
  *
  * Holds the built-in sources, lets third parties register their own via
  * {@see self::EVENT_REGISTER_SOURCES}, wires up their listeners, and exposes the

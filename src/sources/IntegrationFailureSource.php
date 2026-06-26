@@ -20,7 +20,7 @@ use yii\queue\Queue;
  *
  * Fires for any failed queue job, and also exposes a programmatic reporting API
  * (see {@see \coyshdigital\webhooknotifier\services\Sources::reportFailure()}) so other
- * code — such as the site's Dynamics services — can raise failures directly.
+ * code - such as the site's Dynamics services - can raise failures directly.
  *
  * @author Coysh Digital
  * @since 1.0.0
@@ -76,7 +76,7 @@ class IntegrationFailureSource extends BaseSource
      */
     public function description(): string
     {
-        return Craft::t('webhook-notifier', 'Fires when a background (queue) job fails after Craft has exhausted its retries — for example a Dynamics 365 sync, a mailer send, or any plugin’s queue job. It also fires when your own code calls the reporting API: Plugin::getInstance()->sources->reportFailure($title, $detail, $data). Use it to be alerted in Teams the moment something breaks behind the scenes. This plugin’s own delivery jobs are ignored, so a failed Teams send can never trigger another failure notification.');
+        return Craft::t('webhook-notifier', 'Fires when a background (queue) job fails after Craft has exhausted its retries - for example a Dynamics 365 sync, a mailer send, or any plugin’s queue job. It also fires when your own code calls the reporting API: Plugin::getInstance()->sources->reportFailure($title, $detail, $data). Use it to be alerted in Teams the moment something breaks behind the scenes. This plugin’s own delivery jobs are ignored, so a failed Teams send can never trigger another failure notification.');
     }
 
     /**

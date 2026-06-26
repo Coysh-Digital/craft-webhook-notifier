@@ -13,7 +13,7 @@ use craft\helpers\Json;
 use yii\base\Component;
 
 /**
- * Conditions service — evaluates and normalizes a rule's no-code condition.
+ * Conditions service - evaluates and normalizes a rule's no-code condition.
  *
  * A condition is a small set of `field / operator / value` tests combined with
  * "match all" or "match any" logic, evaluated against a source's context.

@@ -56,7 +56,7 @@ class UserSource extends BaseSource
      */
     public function description(): string
     {
-        return Craft::t('webhook-notifier', 'Fires on user lifecycle events: registration, activation, and group changes. The “event” field is one of registered, activated, or groupChanged — add a condition on it to target just one (e.g. “event equals registered”).');
+        return Craft::t('webhook-notifier', 'Fires on user lifecycle events: registration, activation, and group changes. The “event” field is one of registered, activated, or groupChanged - add a condition on it to target just one (e.g. “event equals registered”).');
     }
 
     /**

@@ -9,7 +9,7 @@
 
 {% block content %}
     <p class="light" style="margin-bottom:24px; max-width:48em">
-        {{ "A rule watches for an event (an entry being saved, a form submitted, a job failing, or any event you name), optionally filters it with conditions, then sends to a webhook — a Microsoft Teams channel, Zapier, Slack, or any other endpoint. Add as many as you like."|t('webhook-notifier') }}
+        {{ "A rule watches for an event (an entry being saved, a form submitted, a job failing, or any event you name), optionally filters it with conditions, then sends to a webhook - a Microsoft Teams channel, Zapier, Slack, or any other endpoint. Add as many as you like."|t('webhook-notifier') }}
     </p>
 
     {% if rules|length %}
@@ -19,6 +19,7 @@
                     <th scope="col">{{ "Name"|t('webhook-notifier') }}</th>
                     <th scope="col">{{ "Source"|t('webhook-notifier') }}</th>
                     <th scope="col">{{ "Enabled"|t('webhook-notifier') }}</th>
+                    <th scope="col">{{ "Activity"|t('webhook-notifier') }} <span class="light">({{ sparkDays }}d)</span></th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -28,6 +29,33 @@
                         <th scope="row"><a href="{{ url('webhook-notifier/rules/' ~ rule.id) }}">{{ rule.name }}</a></th>
                         <td>{{ sourceOptions[rule.sourceType] ?? rule.sourceType }}</td>
                         <td>{{ rule.enabled ? '<span class="status green"></span> ' ~ 'Yes'|t('webhook-notifier') : '<span class="status"></span> ' ~ 'No'|t('webhook-notifier') }}</td>
+                        <td data-title="{{ 'Activity'|t('webhook-notifier') }}">
+                            {% set spark = sparklines[rule.id] %}
+                            {% if spark %}
+                                {% set h = 26 %}{% set bw = 5 %}
+                                <div class="flex flex-nowrap" style="align-items:center; gap:10px">
+                                    <svg width="{{ spark.days|length * bw }}" height="{{ h }}" style="display:block; flex:none" role="img" aria-label="{{ 'Deliveries over the last {n} days'|t('webhook-notifier', {n: sparkDays}) }}">
+                                        {% for i, day in spark.days %}
+                                            {% set x = i * bw %}
+                                            {% set bmax = spark.max > 0 ? spark.max : 1 %}
+                                            {% set barH = day.total > 0 ? max(2, (day.total / bmax * (h - 2))|round) : 0 %}
+                                            {% set sentH = day.total > 0 ? (day.sent / day.total * barH)|round : 0 %}
+                                            {% set failH = barH - sentH %}
+                                            <rect x="{{ x }}" y="{{ h - 1 }}" width="{{ bw - 1 }}" height="1" fill="#dfe3e8"></rect>
+                                            {% if failH > 0 %}<rect x="{{ x }}" y="{{ h - barH }}" width="{{ bw - 1 }}" height="{{ failH }}" fill="#e5694a"><title>{{ day.date }}: {{ day.failed }} {{ 'failed'|t('webhook-notifier') }}</title></rect>{% endif %}
+                                            {% if sentH > 0 %}<rect x="{{ x }}" y="{{ h - sentH }}" width="{{ bw - 1 }}" height="{{ sentH }}" fill="#27ab83"><title>{{ day.date }}: {{ day.sent }} {{ 'sent'|t('webhook-notifier') }}</title></rect>{% endif %}
+                                        {% endfor %}
+                                    </svg>
+                                    <span class="light" style="white-space:nowrap; font-size:12px">
+                                        {%- if spark.sent or spark.failed -%}
+                                            {{ spark.sent }} {{ "sent"|t('webhook-notifier') }}{% if spark.failed %} · <span style="color:#cf4520">{{ spark.failed }} {{ "failed"|t('webhook-notifier') }}</span>{% endif %}
+                                        {%- else -%}
+                                            {{ "no activity"|t('webhook-notifier') }}
+                                        {%- endif -%}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </td>
                         <td class="thin">
                             <form method="post" onsubmit="return confirm('{{ 'Delete this rule?'|t('webhook-notifier') }}')">
                                 {{ csrfInput() }}

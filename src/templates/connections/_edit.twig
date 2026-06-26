@@ -29,7 +29,7 @@
         name: 'urlInput',
         value: '',
         placeholder: isNew ? 'https://… or $WEBHOOK_URL' : (maskedUrl ~ '  (' ~ 'leave blank to keep'|t('webhook-notifier') ~ ')'),
-        instructions: "Paste any webhook URL — a Microsoft Teams channel (Power Automate Workflows), Zapier, Slack, a custom endpoint — or reference an environment variable such as {ex}. Direct values are encrypted at rest."|t('webhook-notifier', {ex: '$WEBHOOK_URL'}),
+        instructions: "Paste any webhook URL - a Microsoft Teams channel (Power Automate Workflows), Zapier, Slack, a custom endpoint - or reference an environment variable such as {ex}. Direct values are encrypted at rest."|t('webhook-notifier', {ex: '$WEBHOOK_URL'}),
         required: isNew,
         errors: connection.getErrors('url'),
     }) }}

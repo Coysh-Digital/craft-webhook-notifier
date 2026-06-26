@@ -14,12 +14,12 @@ use craft\helpers\App;
 use yii\base\Component;
 
 /**
- * Connections service — manages Teams channel destinations and resolves their
+ * Connections service - manages Teams channel destinations and resolves their
  * (secret) webhook URLs at send time.
  *
  * A connection's URL is stored either as an environment-variable reference
  * (`$TEAMS_WEBHOOK_OPS`) or as a value encrypted with the application security
- * key — never in plain text.
+ * key - never in plain text.
  *
  * @author Coysh Digital
  * @since 1.0.0

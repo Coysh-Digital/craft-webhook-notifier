@@ -11,7 +11,7 @@ namespace coyshdigital\webhooknotifier\records;
 use craft\db\ActiveRecord;
 
 /**
- * Delivery record — one row in the delivery log.
+ * Delivery record - one row in the delivery log.
  *
  * @property int $id
  * @property int|null $ruleId
