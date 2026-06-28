@@ -11,8 +11,8 @@ namespace coyshdigital\webhooknotifier\sources;
 use Craft;
 use craft\elements\User;
 use craft\events\ElementEvent;
-use craft\events\UserAssignGroupEvent;
 use craft\events\UserEvent;
+use craft\events\UserGroupsAssignEvent;
 use craft\helpers\ElementHelper;
 use craft\services\Elements;
 use craft\services\Users;
@@ -104,7 +104,7 @@ class UserSource extends BaseSource
         Event::on(
             Users::class,
             Users::EVENT_AFTER_ASSIGN_USER_TO_GROUPS,
-            function(UserAssignGroupEvent $event) {
+            function(UserGroupsAssignEvent $event) {
                 $user = Craft::$app->getUsers()->getUserById($event->userId);
                 if ($user !== null) {
                     $this->dispatch($this->_buildContext($user, 'groupChanged'));

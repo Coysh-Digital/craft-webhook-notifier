@@ -1,5 +1,13 @@
 # Release Notes for Webhook Notifier
 
+## 1.5.3 - 2026-06-28
+
+### Fixed
+- The User event source crashed group-change notifications with a `TypeError`.
+  Craft's `EVENT_AFTER_ASSIGN_USER_TO_GROUPS` passes a `UserGroupsAssignEvent`,
+  but the listener type-hinted `UserAssignGroupEvent`, so any code path that
+  assigned a user to groups (e.g. account sync) threw. Corrected the event type.
+
 ## 1.5.2 - 2026-06-26
 
 ### Added
